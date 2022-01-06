@@ -17,5 +17,6 @@ using MCMCDiagnostics
 using SpecialFunctions
 using JLD
 using LatexPrint
+using Latexify
 
-gr(size = (500, 500), legend = false)
+gr(size = (500, 400), legend = false)
