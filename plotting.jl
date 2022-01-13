@@ -8,13 +8,18 @@ function densplot(; Ux=U, xrange=[-1.5,1.5], yrange=[-1.5,1.5], col=false)
     return outplot
 end
 
-function tmplot(;R = 50, try_tmax, ns=1000)
+function tmplot(;R = 50, try_tmax, ns=1000, start=missing)
     ltm = length(try_tmax)
     tpp_tmax  = Array{Float64, 2}(undef, R, ltm)
     opt_tmax  = Array{Float64, 2}(undef, R, ltm)
     for t in 1:ltm
         for i in 1:R
-            sk1 = zz(; NS=ns, x0_0=rand(Dim),tmax=try_tmax[t])
+            if ismissing(start)
+                xstart=rand(Dim)
+            else
+                xstart=start
+            end
+            sk1 = zz(; NS=ns, x0_0=xstart,tmax=try_tmax[t])
             tpp_tmax[i,t] =sum(sk1["GradientEvaluations"][2,:])
             opt_tmax[i,t] =sum(sk1["GradientEvaluations"][3,:])
         end
