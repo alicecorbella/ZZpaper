@@ -488,7 +488,7 @@ function getMestPOT(;ss, x, v, tmax, J=length(t_vec), D=Dim)
     # get the index of the observations used to estimate the max
     idsamp = sample(1:J,ss)
     # maximum rate per each dimension (this is unclean might include some nan)
-    λ̄uncl     = zeros(ss, 3)
+    λ̄uncl     = zeros(ss, D)
     for s in 1:ss
         for d in 1:D
             Optd_s= optimize(t -> -rateswitchj(t; j=idsamp[s], x0=x, v0=v)[d], 0, tmax, iterations=10)
@@ -528,7 +528,7 @@ function getMestPOT(;ss, x, v, tmax, J=length(t_vec), D=Dim)
     while any(isnan.(Mest))
         idsamp = sample(1:J,ss)
         # maximum rate per each dimension (this is unclean might include some nan)
-        λ̄uncl     = zeros(ss, 3)
+        λ̄uncl     = zeros(ss, D)
         for s in 1:ss
             for d in 1:D
                 Optd_s= optimize(t -> -rateswitchj(t; j=idsamp[s], x0=x, v0=v)[d], 0, tmax, iterations=10)
