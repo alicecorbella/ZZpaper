@@ -17,18 +17,20 @@ using Dates
 using Extremes
 
 Y = open(deserialize, string(CODEwd,"data/BDA_preprocessed.bin"))
-Random.seed!(1234)
-Ysd = Y[sample(1:(size(Y)[1]), 10000), :]
-print(Ysd[1:20, :])
+
+# check why this missing has escaped the filters
+Y=Y[.!ismissing.(Y.TIMEDIAGNOSITOFINALEVENT),:]
+
+(print(describe(Y)))
 
 # model with age and STAGE if spreaded
 dimnames=["lgα", "β₀", "β₁", "β₂"]
-t_vec = Dates.value.(Ysd.TIMEDIAGNOSITOFINALEVENT).+0.01
+t_vec = Dates.value.(Y.TIMEDIAGNOSITOFINALEVENT).+0.01
 c_vec = zeros(length(t_vec))
-c_vec[findall(Ysd.NEWVITALSTATUS.=="D")] .= 1
-z1_vec = (Ysd.AGE.-mean(Ysd.AGE))./std(Ysd.AGE)
+c_vec[findall(Y.NEWVITALSTATUS.=="D")] .= 1
+z1_vec = (Y.AGE.-mean(Y.AGE))./std(Y.AGE)
 z2_vec = zeros(length(t_vec))
-z2_vec[findall(Ysd.STAGENUMBER.>=3)] .= 1
+z2_vec[findall(Y.STAGENUMBER.>=3)] .= 1
 
 function U(x::Vector; t = t_vec, c = c_vec, z1= z1_vec, z2=z2_vec)
     # transform parameter
@@ -53,20 +55,20 @@ U([-0.5, +9, -0.4, -0.4])
 Dim  =4
 start = [-0.5, +9, -0.4, -0.4]
 start2= [-0.15, 13, -0.1, -5]
-zzsk  =  zz(; NS=1000, x0_0=start, tmax=0.02)
-zzsk2 =  zz(; NS=1000, x0_0=start2, tmax=0.02)
+zzsk  =  zz(; NS=10, x0_0=start, tmax=0.02)
+zzsk2 =  zz(; NS=10, x0_0=start2, tmax=0.02)
 
 p1=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 2], title=dimnames[1])
-plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 2], title=dimnames[1])
+# plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 2], title=dimnames[1])
 p2=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 3], title=dimnames[2])
-plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 3], title=dimnames[2])
+# plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 3], title=dimnames[2])
 p3=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 4], title=dimnames[3])
-plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 4], title=dimnames[3])
+# plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 4], title=dimnames[3])
 p4=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 5], title=dimnames[4])
-plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 5], title=dimnames[4])
+# plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 5], title=dimnames[4])
 p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
 
-savefig(p5, string(SAVEwd, "4parsk.pdf"))
+# savefig(p5, string(SAVEwd, "4parsk.pdf"))
 
 # SUBSAMPLING
 
@@ -94,7 +96,7 @@ for jth in 1:length(t_vec)
 end
 # done
 
-zzskss=zz_w_ss(; NS=50000, x0_0=start, tmax=0.025, NOBS=length(t_vec))
+zzskss=zz_w_ss(; NS=1000, x0_0=start, tmax=0.025,ssM =10000, NOBS=length(t_vec))
 
 
 p1=plot(zzskss["SK"][:, 1], zzskss["SK"][:, 2], title=dimnames[1])
@@ -107,4 +109,4 @@ p4=plot(zzskss["SK"][:, 1], zzskss["SK"][:, 5], title=dimnames[4])
 plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 5])
 p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
 
-savefig(p5, string(SAVEwd, "4parSScomp.pdf"))
+savefig(p5, string(SAVEwd, "ALLSScomp.pdf"))
