@@ -363,164 +363,6 @@ getMestPOT(ss=30*20, x=[-0.5, 9, -0.5], v=[+1,+1, +1], tmax=0.1, J=length(t_vec)
 
 Random.seed!(1234)
 
-
-function zz_w_ss(; NS,      # number of skeleton points
-                   x0_0,      # initial location
-                   v0_0=missing,    # initial velocity
-                   tmax,          # tmax for tuning
-                   B=false,        # budget available, if false run until NS
-                   # roundopt=true, # whether to use our rounded version of the optimization
-                   ε₁ = 1.00e-20,   # boundary error : how close to get before turning
-                   ssM =2000,     #number of observations to be used to get the maximum
-                   NOBS)          # total number of observation
-    # check if the stopping criterion has been defined and how
-    if (NS==false && B==false)
-        error("Choose one stopping criterion: e.g. either: NS=10000; B=500000")
-    elseif (NS != false && B !=false)
-        error("No multiple stopping criteria: choose either NS=... or  B=... \n
-        set the other to false")
-    end
-
-    # get an estimate of the size of the sketon (SS) :
-    # if that is not given compute it from B and T and
-    # add at the end some checks to make sure
-    # we append more lines if there is the need
-    (NS != false) ? SS = NS : SS = B
-
-    # check the dimension of the problem
-    if (size(x0_0, 2)==1)
-        D    = size(x0_0, 1)
-    else
-        error("the intial value x0_0 must be a vertical vector of dimensions Dx1, e.g. [x_01, x_02, ..., x_0D]")
-    end
-    # set up the array for the skeleton :
-    # note: these are horizonatal because it should be more efficient for Julia
-    x0set = Array{Float64, 2}(undef, D, SS)
-    v0set = Array{Float64, 2}(undef, D, SS)
-    t0set = Array{Float64, 2}(undef, 1, SS)
-    # Array of the number of gradient evaluations with three rows
-    # 1st: check horizon; 2nd: optimization; 3rd tpp
-    GradEvals = zeros(Float64, 3, SS)
-    ErrorOpt  = zeros(Float64, 1, SS)
-
-    # setting up they state at the begining of the location
-    x0set[:, 1] = x0_0
-
-    # set velocity to one if missing
-    if (ismissing(v0_0))
-        v0set[:, 1] = ones(D)
-    else
-        v0set[:, 1] = v0_0
-    end
-    t0set[1, 1] = 0.0
-
-
-    x0i = x0set[:, 1]
-    v0i = v0set[:, 1]
-    ts  = 0
-    tp  = 0
-    horizon=tmax
-    k   = 2
-
-    # stopping criterion
-    NS != false ? keepgoing = (k <= NS) : keepgoing = sum(GradEvals)<=B
-
-    # TOADD ↓
-    # Check if the initial values are in a section were the likelihood is not defined.
-    # TOADD ↑
-    while keepgoing         # Run the loop until the chosen condition is met
-    # check for bounds at the horizon
-        while isnan(globalrate(horizon; x0=x0i, v0=v0i)) && horizon>ε₁
-            horizon=horizon/2
-            # count evaluations [added to the horizon change section]
-            GradEvals[1, k] = GradEvals[1, k] + 1
-        end
-        # if approached the horizon (at the chosen ε₁) switch back
-        if horizon <=ε₁
-            error("Possible border ahead")
-        else # continue with the current horizon
-            M   = getMestPOT(ss=ssM, x=x0i, v=v0i, tmax=horizon, J=NOBS)
-            # count evaluations [added to the optimization evaluation section]
-            GradEvals[2, k] = GradEvals[2, k] + D  #*10 or iterations per grad evals
-            if sum(M) == 0   # move dererministically if the rate of switching is 0 in all dims
-                ts = ts+horizon
-                x0i= x0i+horizon*v0i
-            else        # propose a time for the switch in the dimensions
-                tp_d   = rand.(Exponential.(1 ./M))
-                i0     = argmin(tp_d)
-                tp     = minimum(tp_d)
-
-                if tp >= horizon    # move deterministically if reached the horizon
-                    ts = ts+horizon
-                    x0i= x0i+horizon*v0i
-                else                # evaluate proposal
-                    accept = false  # start evaluations
-                    while (tp < horizon) && (accept == false)
-                        j_0  = rand(1:NOBS)
-                        ar = (rateswitchj(tp; j=j_0, x0=x0i, v0=v0i)[i0])/M[i0]
-                        # count evaluations [added to the thinned section]
-                        GradEvals[3, k] = GradEvals[3, k] + 1
-                        if ar > 1   # if optimization was wrong
-                            horizon = tp
-                            M   = getMestPOT(ss=ssM, x=x0i, v=v0i, tmax=horizon, J=NOBS)
-                            tp_d   = rand.(Exponential.(1 ./M))
-                            i0     = argmin(tp_d)
-                            tp     = minimum(tp_d)
-                            # count evaluations [added to the optimization evaluation section]
-                            GradEvals[2, k] = GradEvals[2, k] + D  #*10 or iterations per grad evals
-                            ErrorOpt[1, k] = ErrorOpt[1, k] + 1
-                        else        # evaluate acceptance
-                            if (rand(Bernoulli(ar)))
-                                # update location and switch velocity
-                                x0i    = x0i + tp * v0i
-                                v0i[i0] = -v0i[i0]
-                                # save the skeleton point
-                                v0set[:, k] = v0i
-                                x0set[:, k] = x0i
-                                t0set[1, k] = t0set[1, (k-1)]+ts+tp
-                                # reset time from skeleton point, horizon,
-                                # flag acceptance and increase counter
-                                ts = 0.0
-                                tp = 0.0
-                                horizon = tmax
-                                k = k+1
-                                accept = true
-                                print(string(k ,"\n"))
-                            else   # upon rejection increas stochastic time
-                                tp_d   = rand.(Exponential.(1 ./M))
-                                i0     = argmin(tp_d)
-                                tp     = tp+minimum(tp_d)                        end
-                        end
-
-                    end
-                    if tp >= horizon && (accept == false) # if exited while loop because horizon reached
-                        ts = ts+horizon
-                        x0i= x0i+horizon*v0i
-                    end
-                end
-            end
-        end
-        NS != false ? keepgoing = (k <= NS) : keepgoing = sum(GradEvals)<=B
-
-    end
-    if B != false
-        x0set=x0set[:,1:(k-1)]
-        v0set=v0set[:,1:(k-1)]
-        t0set=t0set[:,1:(k-1)]
-        GradEvals=GradEvals[:,1:(k-1)]
-        ErrorOpt=ErrorOpt[:,1:(k-1)]
-    end
-    outsk=hcat(transpose(t0set),transpose(x0set),transpose(v0set),
-        transpose(GradEvals),transpose(ErrorOpt))
-    output=Dict([("SkeletonLocation", x0set), ("SkeletonVelocity", v0set), ("SkeletonTime", t0set)
-      , ("GradientEvaluations", GradEvals), ("Errorsoptimization", ErrorOpt), ("SK",outsk)])
-    return output
-end
-
-
-zzskss=zz_w_ss(; NS=10, x0_0=[-0.5, 9, -0.5], tmax=0.025, NOBS=length(t_vec)) 
-
-
 NS=1000      # number of skeleton points
 x0_0=[-0.5, 9, -0.5]         # initial location
 v0_0=missing    # initial velocity
@@ -532,6 +374,148 @@ ssM = 20*80
 NOBS=length(t_vec)
 
 
+# check if the stopping criterion has been defined and how
+if (NS==false && B==false)
+    error("Choose one stopping criterion: e.g. either: NS=10000; B=500000")
+elseif (NS != false && B !=false)
+    error("No multiple stopping criteria: choose either NS=... or  B=... \n
+    set the other to false")
+end
+
+# get an estimate of the size of the sketon (SS) :
+# if that is not given compute it from B and T and
+# add at the end some checks to make sure
+# we append more lines if there is the need
+(NS != false) ? SS = NS : SS = B
+
+# check the dimension of the problem
+if (size(x0_0, 2)==1)
+    D    = size(x0_0, 1)
+else
+    error("the intial value x0_0 must be a vertical vector of dimensions Dx1, e.g. [x_01, x_02, ..., x_0D]")
+end
+# set up the array for the skeleton :
+# note: these are horizonatal because it should be more efficient for Julia
+x0set = Array{Float64, 2}(undef, D, SS)
+v0set = Array{Float64, 2}(undef, D, SS)
+t0set = Array{Float64, 2}(undef, 1, SS)
+# Array of the number of gradient evaluations with three rows
+# 1st: check horizon; 2nd: optimization; 3rd tpp
+GradEvals = zeros(Float64, 3, SS)
+ErrorOpt  = zeros(Float64, 1, SS)
+
+# setting up they state at the begining of the location
+x0set[:, 1] = x0_0
+
+# set velocity to one if missing
+if (ismissing(v0_0))
+    v0set[:, 1] = ones(D)
+else
+    v0set[:, 1] = v0_0
+end
+t0set[1, 1] = 0.0
+
+
+x0i = x0set[:, 1]
+v0i = v0set[:, 1]
+ts  = 0
+tp  = 0
+horizon=tmax
+k   = 2
+
+# stopping criterion
+NS != false ? keepgoing = (k <= NS) : keepgoing = sum(GradEvals)<=B
+
+# TOADD ↓
+# Check if the initial values are in a section were the likelihood is not defined.
+# TOADD ↑
+while keepgoing         # Run the loop until the chosen condition is met
+# check for bounds at the horizon
+    while isnan(globalrate(horizon; x0=x0i, v0=v0i)) && horizon>ε₁
+        horizon=horizon/2
+        # count evaluations [added to the horizon change section]
+        GradEvals[1, k] = GradEvals[1, k] + 1
+    end
+    # if approached the horizon (at the chosen ε₁) switch back
+    if horizon <=ε₁
+        error("Possible border ahead")
+    else # continue with the current horizon
+        M   = getMestPOT(ss=ssM, x=x0i, v=v0i, tmax=horizon, J=NOBS)
+        # count evaluations [added to the optimization evaluation section]
+        GradEvals[2, k] = GradEvals[2, k] + D  #*10 or iterations per grad evals
+        if sum(M) == 0   # move dererministically if the rate of switching is 0 in all dims
+            ts = ts+horizon
+            x0i= x0i+horizon*v0i
+        else        # propose a time for the switch in the dimensions
+            tp_d   = rand.(Exponential.(1 ./M))
+            i0     = argmin(tp_d)
+            tp     = minimum(tp_d)
+
+            if tp >= horizon    # move deterministically if reached the horizon
+                ts = ts+horizon
+                x0i= x0i+horizon*v0i
+            else                # evaluate proposal
+                accept = false  # start evaluations
+                while (tp < horizon) && (accept == false)
+                    j_0  = rand(1:NOBS)
+                    ar = (rateswitchj(tp; j=j_0, x0=x0i, v0=v0i)[i0])/M[i0]
+                    # count evaluations [added to the thinned section]
+                    GradEvals[3, k] = GradEvals[3, k] + 1
+                    if ar > 1   # if optimization was wrong
+                        horizon = tp
+                        M   = getMestPOT(ss=ssM, x=x0i, v=v0i, tmax=horizon, J=NOBS)
+                        tp_d   = rand.(Exponential.(1 ./M))
+                        i0     = argmin(tp_d)
+                        tp     = minimum(tp_d)
+                        # count evaluations [added to the optimization evaluation section]
+                        GradEvals[2, k] = GradEvals[2, k] + D  #*10 or iterations per grad evals
+                        ErrorOpt[1, k] = ErrorOpt[1, k] + 1
+                    else        # evaluate acceptance
+                        if (rand(Bernoulli(ar)))
+                            # update location and switch velocity
+                            x0i    = x0i + tp * v0i
+                            v0i[i0] = -v0i[i0]
+                            # save the skeleton point
+                            v0set[:, k] = v0i
+                            x0set[:, k] = x0i
+                            t0set[1, k] = t0set[1, (k-1)]+ts+tp
+                            # reset time from skeleton point, horizon,
+                            # flag acceptance and increase counter
+                            ts = 0.0
+                            tp = 0.0
+                            horizon = tmax
+                            k = k+1
+                            accept = true
+                            print(string(k ,"\n"))
+                        else   # upon rejection increas stochastic time
+                            tp_d   = rand.(Exponential.(1 ./M))
+                            i0     = argmin(tp_d)
+                            tp     = tp+minimum(tp_d)                        end
+                    end
+
+                end
+                if tp >= horizon && (accept == false) # if exited while loop because horizon reached
+                    ts = ts+horizon
+                    x0i= x0i+horizon*v0i
+                end
+            end
+        end
+    end
+    NS != false ? keepgoing = (k <= NS) : keepgoing = sum(GradEvals)<=B
+
+end
+if B != false
+    x0set=x0set[:,1:(k-1)]
+    v0set=v0set[:,1:(k-1)]
+    t0set=t0set[:,1:(k-1)]
+    GradEvals=GradEvals[:,1:(k-1)]
+    ErrorOpt=ErrorOpt[:,1:(k-1)]
+end
+outsk=hcat(transpose(t0set),transpose(x0set),transpose(v0set),
+    transpose(GradEvals),transpose(ErrorOpt))
+output=Dict([("SkeletonLocation", x0set), ("SkeletonVelocity", v0set), ("SkeletonTime", t0set)
+  , ("GradientEvaluations", GradEvals), ("Errorsoptimization", ErrorOpt), ("SK",outsk)])
+return(output)
 
 p1= plot(outsk[:, 1], outsk[:, 2], title=dimnames[1])
 plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 2])
