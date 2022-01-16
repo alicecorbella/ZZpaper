@@ -94,7 +94,7 @@ for jth in 1:length(t_vec)
 end
 # done
 
-zzskss=zz_w_ss(; NS=50000, x0_0=start, tmax=0.025, NOBS=length(t_vec))
+zzskss=zz_w_ss(; NS=10000, x0_0=start, tmax=0.025, NOBS=length(t_vec))
 
 
 p1=plot(zzskss["SK"][:, 1], zzskss["SK"][:, 2], title=dimnames[1])

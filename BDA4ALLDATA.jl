@@ -100,13 +100,13 @@ zzskss=zz_w_ss(; NS=1000, x0_0=start, tmax=0.025,ssM =10000, NOBS=length(t_vec))
 
 
 p1=plot(zzskss["SK"][:, 1], zzskss["SK"][:, 2], title=dimnames[1])
-plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 2])
+# plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 2])
 p2=plot(zzskss["SK"][:, 1], zzskss["SK"][:, 3], title=dimnames[2])
-plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 3])
+# plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 3])
 p3=plot(zzskss["SK"][:, 1], zzskss["SK"][:, 4], title=dimnames[3])
-plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 4])
+# plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 4])
 p4=plot(zzskss["SK"][:, 1], zzskss["SK"][:, 5], title=dimnames[4])
-plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 5])
+# plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 5])
 p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
 
-savefig(p5, string(SAVEwd, "ALLSScomp.pdf"))
+savefig(p5, string(SAVEwd, "ALLSScompnooth.pdf"))
