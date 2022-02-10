@@ -384,6 +384,158 @@ zzs=zzsk=zzsm=hmc=hmcs=nothing
 
 
 
+
+# -----------------------------------------
+# Example on Bimodal  normal
+# -----------------------------------------
+NameEx = "BimodNorm2d"
+mkdir(string(SAVEwd, NameEx))
+Dim = 2
+μ₁ = zeros(Dim).-2
+μ₂ = zeros(Dim).+2
+Σ₁ = Diagonal(ones(Dim)*2)+zeros( Dim,Dim)
+Σ₂ = Diagonal(ones(Dim)*2)+zeros( Dim,Dim)
+θ = [0.5, 0.5]
+
+function g(x::Vector, m1=μ₁, m2=μ₂, s1=Σ₁, s2=Σ₂, p=θ)
+    gx = p[1]*(det(2π.*s1))^(-.5) * exp(-0.5*(transpose(x.-m1)*inv(s1)*(x-m1)))+
+        p[2]*(det(2π.*s2))^(-.5) * exp(-0.5*(transpose(x.-m2)*inv(s2)*(x-m2)))
+    return gx
+end
+ g([-4,-4])
+
+function U(x::Vector, m1=μ₁, m2=μ₂, s1=Σ₁, s2=Σ₂, p=θ)
+    gx = p[1]*(det(2π.*s1))^(-.5) * exp(-0.5*(transpose(x.-m1)*inv(s1)*(x-m1)))+
+        p[2]*(det(2π.*s2))^(-.5) * exp(-0.5*(transpose(x.-m2)*inv(s2)*(x-m2)))
+    return -log(gx)
+end
+
+f1=densplot(xrange=[-7,7], yrange=[-7,7])
+savefig(f1, string(SAVEwd, NameEx, "/f1.pdf"))
+
+# f2 - tune of t_max
+# note tmax should be tested starting from the difference between the modes
+
+f2=tmplot(R=r_tmax, try_tmax=[2, 3, 4, 5, 6])
+savefig(f2, string(SAVEwd, NameEx, "/f2.pdf"))
+tmax_tuned=4
+
+# f3 - inspection of the zig zag from mode
+start=[0,0]
+# multiple chains from the center
+f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+for r in 1:r_insp
+    zzsk =  zz(; NS=1000, x0_0=start, tmax=tmax_tuned)
+    plot!(zzsk["SK"][:, 2], zzsk["SK"][:, 3])
+end
+savefig(f3, string(SAVEwd, NameEx, "/f3.pdf"))
+
+# f4 - inspection of the zig zag from tail
+f4=tailstart(xrange=[-30, 30], yrange=[-30, 30], nside=10)
+savefig(f4, string(SAVEwd, NameEx, "/f4.pdf"))
+
+
+# f5 - density inspection
+zzsk = zz(; NS=100000, x0_0=start, tmax=tmax_tuned)
+zzsm = zzsample(;N=10000, sk=zzsk)
+f5=plot(zzsm[:, 1], zzsm[:, 2], seriestype=:scatter,
+        color=:black, alpha=0.5, markersize=3,
+        xlabel="X₁", ylabel="X₂")
+contour!(range(-4, 4, length=100),range(-4,4, length=100),
+    [(exp(-U([x,y]))) for y in range(-4, 4, length=100),
+        x in range(-4,4, length=100)],
+        fill=(false,cgrad(:grays,[0,0.1,1.0])), color=:lightgray, width=1)
+savefig(f5, string(SAVEwd, NameEx, "/f5.pdf"))
+
+# parameters HMC
+Lε_tuned=3
+L_tuned=2
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=start)
+plot(plot(hmc["SampleQ"][:, 1]), plot(hmc["SampleQ"][:, 2]),
+        layout=(2,1), size=(1000,800))
+ac=plot(autocor(hmc["SampleQ"][:, 1]))
+plot!(autocor(hmc["SampleQ"][:, 2]))
+sum(hmc["accept"])/1000
+
+
+# f6 - inspection of the HMC from mode
+start=[0,0]
+# multiple chains from the center
+f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+for r in 1:r_insp
+    hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=start)
+    plot!(hmc["SampleQ"][:, 1], hmc["SampleQ"][:, 2])
+end
+savefig(f6, string(SAVEwd, NameEx, "/f6.pdf"))
+
+# f7 - inspection of the HMC from far
+f7=tailstart_hmc(xrange=[-30, 30], yrange=[-30, 30], nside=10)
+savefig(f7, string(SAVEwd, NameEx, "/f7.pdf"))
+
+# f8 - density hmc
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=start)
+f8=plot(hmc["SampleQ"][1:10:100000, 1], hmc["SampleQ"][1:10:100000, 2], seriestype=:scatter,
+        color=:black, alpha=0.5, markersize=3, xlabel="X₁", ylabel="X₂")
+contour!(range(-4, 4, length=100),range(-4,4, length=100),
+    [(exp(-U([x,y]))) for y in range(-4, 4, length=100),
+        x in range(-4,4, length=100)],
+        fill=(false,cgrad(:grays,[0,0.1,1.0])), color=:lightgray, width=1)
+savefig(f8, string(SAVEwd, NameEx, "/f8.pdf"))
+
+# -------- PERFORMANCE COMPARISON -------- #
+# generate the sample
+zzs = Dict()
+hmcs= Dict()
+for r in 1:r_ess
+    start=rand(Dim)
+    zzs[[r]]=zz(NS=false, B=budget, x0_0=start, tmax=tmax_tuned)
+    hmcs[[r]]=runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=Int(round(budget/(L_tuned+1))),qs=start)
+    print(r)
+end
+
+# f9 - chose nbatches for zz
+f9= bs_zz(;try_nb=[3, 5, 10, 50, 100, 200, 500])
+savefig(f9, string(SAVEwd, NameEx, "/f9.pdf"))
+nbZZ_tuned = 50
+
+# f10 - chose nbatches for hmc
+f10= bs_hmc(;try_nb=[5, 10, 100, 500, 1000, 2000])
+savefig(f10, string(SAVEwd, NameEx, "/f10.pdf"))
+nbHMC_tuned = 100
+
+# summaries and f11 - plot of the ESS
+outESS = ESSsummaries()
+outESS
+
+
+touch(string(SAVEwd, NameEx,"/summaries.txt" ))
+io = open(string(SAVEwd, NameEx, "/summaries.txt"), "w")
+write(io, outESS["string"])
+close(io)
+f11=violin(string.(transpose(1:Dim)), (outESS["essZZ"]), side=:right, linewidth=0,
+    label="ZZ", color=:blue, alpha=0.7, xlabel="Dim", ylabel="ESS", legend=false,
+    ylims=(0, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*1.1))
+violin!(string.(transpose(1:Dim)), (outESS["essHMC"]), side=:left, linewidth=0,
+    label="HMC", color=:red)
+annotate!([(Dim+0.2, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*1.05, ("ZZ", 14, :blue, :center)),
+    (Dim+0.2, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*0.95, ("HMC", 14, :red, :center))])
+savefig(f11, string(SAVEwd, NameEx, "/f11.pdf"))
+
+# save ESS
+JLD.save(string(SAVEwd, NameEx, "/out.jld"),
+    Dict("outESS"=>outESS, "zzs"=>zzs, "hmcs"=>hmcs))
+
+# delete everything
+f1=f2=f3=f4=f5=f6=f7=f8=f9=f10=f11=nothing
+NameEx=io=nothing
+tmax_tuned=L_tuned=Lε_tuned=nbZZ_tuned=nbHMC_tuned=start=nothing
+zzs=zzsk=zzsm=hmc=hmcs=nothing
+Σ=μ=nothing
+
+
+
+
+
 # -----------------------------------------
 # Example on light tailed doistributions
 # -----------------------------------------
@@ -630,3 +782,211 @@ NameEx=io=nothing
 tmax_tuned=L_tuned=Lε_tuned=nbZZ_tuned=nbHMC_tuned=start=nothing
 zzs=zzsk=zzsm=hmc=hmcs=nothing
 Σ=μ=nothing
+
+
+
+# -----------------------------------------
+# Example on 10variate Isotropic normal
+# -----------------------------------------
+NameEx = "IsoNorm10d"
+mkdir(string(SAVEwd, NameEx))
+Dim = 10
+μ = zeros(Dim)
+Σ = Diagonal(ones(Dim))+zeros( Dim,Dim)
+function U(x::Vector, m=μ, s=Σ)
+    -(-2/2*log(2π)-0.5*log(det(s))-
+    0.5*(transpose(x-m)*inv(s)*(x-m))
+     )
+end
+
+# f2 - tune of t_max
+f2=tmplot(R=r_tmax, try_tmax=[0.2, 0.4, 0.6, 0.8, 1])
+savefig(f2, string(SAVEwd, NameEx, "/f2.pdf"))
+tmax_tuned=0.6
+
+# f3 - inspection of the zig zag from mode
+# multiple chains from the center
+zzsk_Dict=Dict()
+for r in 1:r_insp
+    start=zeros(Dim)
+    zzsk_Dict[r] =  zz(; NS=1000, x0_0=start, tmax=tmax_tuned)
+end
+
+for d in 1:Dim
+    fx = plot(zzsk_Dict[1]["SK"][:, 1], zzsk_Dict[1]["SK"][:, d+1],
+        xlabel="Time", ylabel=string("X",d))
+    for r in 1:r_insp
+        plot!(zzsk_Dict[r]["SK"][:, 1], zzsk_Dict[r]["SK"][:, d+1])
+    end
+    savefig(fx, string(SAVEwd, NameEx, "/f3d", d,".pdf"))
+end
+
+
+# f4 - inspection of the zig zag from tail
+
+eachdim_range = [-7,7]
+
+# multiple chains from some sampled extremes
+zzsk_Dict=Dict()
+for r in 1:r_insp
+    start = sample(eachdim_range, 10)
+    zzsk_Dict[r] =  zz(; NS=1000, x0_0=start, tmax=tmax_tuned)
+end
+
+for d in 1:Dim
+    fx = plot(zzsk_Dict[1]["SK"][:, 1], zzsk_Dict[1]["SK"][:, d+1],
+        xlabel="Time", ylabel=string("X",d))
+    for r in 1:r_insp
+        plot!(zzsk_Dict[r]["SK"][:, 1], zzsk_Dict[r]["SK"][:, d+1])
+    end
+    savefig(fx, string(SAVEwd, NameEx, "/f4d", d,".pdf"))
+end
+
+# CONTINUE FROM HERE
+
+
+# f5 - density inspection
+zzsk = zz(; NS=100000, x0_0=start, tmax=tmax_tuned)
+zzsm = zzsample(;N=10000, sk=zzsk)
+f5=plot(zzsm[:, 1], zzsm[:, 2], seriestype=:scatter,
+        color=:black, alpha=0.5, markersize=3,
+        xlabel="X₁", ylabel="X₂")
+contour!(range(-4, 4, length=100),range(-4,4, length=100),
+    [(pdf(MvNormal([0,0], [[1.0,0]  [0,1]]), [x,y])) for y in range(-4, 4, length=100), x in range(-4,4, length=100)],
+        fill=(false,cgrad(:grays,[0,0.1,1.0])))
+savefig(f5, string(SAVEwd, NameEx, "/f5a.pdf"))
+f5=plot(zzsm[:, 9], zzsm[:, 10], seriestype=:scatter,
+        color=:black, alpha=0.5, markersize=3,
+        xlabel="X₉", ylabel="X₁₀")
+contour!(range(-4, 4, length=100),range(-4,4, length=100),
+    [(pdf(MvNormal([0,0], [[1.0,0]  [0,1]]), [x,y])) for y in range(-4, 4, length=100), x in range(-4,4, length=100)],
+        fill=(false,cgrad(:grays,[0,0.1,1.0])))
+savefig(f5, string(SAVEwd, NameEx, "/f5b.pdf"))
+
+
+# parameters HMC
+Lε_tuned=1
+L_tuned=2
+
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=start)
+
+
+plot(plot(hmc["SampleQ"][:, 1]), plot(hmc["SampleQ"][:, 2]),
+    plot(hmc["SampleQ"][:, 3]), plot(hmc["SampleQ"][:, 4]),
+    plot(hmc["SampleQ"][:, 5]), plot(hmc["SampleQ"][:, 6]),
+    plot(hmc["SampleQ"][:, 7]), plot(hmc["SampleQ"][:, 8]),
+    plot(hmc["SampleQ"][:, 9]), plot(hmc["SampleQ"][:, 10]),
+    layout=(5,2), size=(1000,800))
+
+
+ac=plot(autocor(hmc["SampleQ"][:, 1]))
+for d in 1:Dim
+    plot!(autocor(hmc["SampleQ"][:, d]))
+end
+display(ac)
+
+
+
+sum(hmc["accept"])/1000
+
+
+# f6 - inspection of the HMC from mode
+# multiple chains from the center
+hmc_Dict=Dict()
+for r in 1:r_insp
+    start=zeros(Dim)
+    hmc_Dict[r] =  runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=start)
+end
+
+for d in 1:Dim
+    fx = plot(hmc_Dict[1]["SampleQ"][:, 1],
+        xlabel="Iterations", ylabel=string("X",d))
+    for r in 1:r_insp
+        plot!(hmc_Dict[r]["SampleQ"][:, d])
+    end
+    savefig(fx, string(SAVEwd, NameEx, "/f6d", d,".pdf"))
+end
+
+# f7 - inspection of the HMC from far
+hmc_Dict=Dict()
+for r in 1:r_insp
+    start = sample(eachdim_range, 10)
+    hmc_Dict[r] =  runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=start)
+end
+for d in 1:Dim
+    fx = plot(hmc_Dict[1]["SampleQ"][:, 1],
+        xlabel="Iterations", ylabel=string("X",d))
+    for r in 1:r_insp
+        plot!(hmc_Dict[r]["SampleQ"][:, d])
+    end
+    savefig(fx, string(SAVEwd, NameEx, "/f7d", d,".pdf"))
+end
+
+
+
+# f8 - density hmc
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=start)
+f8=plot(hmc["SampleQ"][1:10:100000, 1], hmc["SampleQ"][1:10:100000, 2], seriestype=:scatter,
+        color=:black, alpha=0.5, markersize=3, xlabel="X₁", ylabel="X₂")
+contour!(range(-4, 4, length=100),range(-4,4, length=100),
+    [(pdf(MvNormal([0,0], [[1.0,0]  [0,1]]), [x,y])) for y in range(-4, 4, length=100), x in range(-4,4, length=100)],
+        fill=(false,cgrad(:grays,[0,0.1,1.0])))
+savefig(f8, string(SAVEwd, NameEx, "/f8a.pdf"))
+f8=plot(hmc["SampleQ"][1:10:100000, 9], hmc["SampleQ"][1:10:100000, 10], seriestype=:scatter,
+        color=:black, alpha=0.5, markersize=3, xlabel="X₉", ylabel="X₁₀")
+contour!(range(-4, 4, length=100),range(-4,4, length=100),
+    [(pdf(MvNormal([0,0], [[1.0,0]  [0,1]]), [x,y])) for y in range(-4, 4, length=100), x in range(-4,4, length=100)],
+        fill=(false,cgrad(:grays,[0,0.1,1.0])))
+savefig(f8, string(SAVEwd, NameEx, "/f8b.pdf"))
+
+# -------- PERFORMANCE COMPARISON -------- #
+# generate the sample
+zzs = Dict()
+hmcs= Dict()
+for r in 1:r_ess
+    start=rand(Dim)
+    zzs[[r]]=zz(NS=false, B=budget, x0_0=start, tmax=tmax_tuned)
+    hmcs[[r]]=runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=Int(round(budget/(L_tuned+1))),qs=start)
+    print(r)
+end
+
+# f9 - chose nbatches for zz
+f9= bs_zz(;try_nb=[100,200,300,400,500])
+savefig(f9, string(SAVEwd, NameEx, "/f9.pdf"))
+nbZZ_tuned = 300
+
+# f10 - chose nbatches for hmc
+f10= bs_hmc(;try_nb=[10,50, 100,200,300,400,500])
+savefig(f10, string(SAVEwd, NameEx, "/f10.pdf"))
+nbHMC_tuned = 100
+
+# summaries and f11 - plot of the ESS
+outESS = ESSsummaries()
+outESS
+
+
+touch(string(SAVEwd, NameEx,"/summaries.txt" ))
+io = open(string(SAVEwd, NameEx, "/summaries.txt"), "w")
+write(io, outESS["string"])
+close(io)
+f11=violin(string.(transpose(1:Dim)), (outESS["essZZ"]), side=:right, linewidth=0,
+    label="ZZ", color=:blue, alpha=0.7, xlabel="Dim", ylabel="ESS", legend=false,
+    ylims=(0, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*1.1))
+violin!(string.(transpose(1:Dim)), (outESS["essHMC"]), side=:left, linewidth=0,
+    label="HMC", color=:red)
+annotate!([(Dim+0.2, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*1.05, ("ZZ", 14, :blue, :center)),
+    (Dim+0.2, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*0.95, ("HMC", 14, :red, :center))])
+savefig(f11, string(SAVEwd, NameEx, "/f11.pdf"))
+
+# save ESS
+JLD.save(string(SAVEwd, NameEx, "/out.jld"),
+    Dict("outESS"=>outESS, "zzs"=>zzs, "hmcs"=>hmcs))
+
+# delete everything
+f1=f2=f3=f4=f5=f6=f7=f8=f9=f10=f11=nothing
+NameEx=io=nothing
+tmax_tuned=L_tuned=Lε_tuned=nbZZ_tuned=nbHMC_tuned=start=nothing
+zzs=zzsk=zzsm=hmc=hmcs=nothing
+Σ=μ=nothing
+
+det(Diagonal(ones(Dim))*0.2+zeros( Dim,Dim).+0.8)
