@@ -24,7 +24,7 @@ using Extremes
 
 Y = open(deserialize, string(CODEwd,"data/BDA_preprocessed.bin"))
 Random.seed!(1234)
-Ysd = Y[sample(1:(size(Y)[1]), 10000), :]
+Ysd = Y[sample(1:(size(Y)[1]), 500), :]
 print(Ysd[1:20, :])
 
 # model with age and STAGE if spreaded
@@ -40,7 +40,7 @@ function U(x::Vector; t = t_vec, c = c_vec, z1= z1_vec, z2=z2_vec)
     # transform parameter
     α = exp(x[1])
     J = length(t)
-    mll = 0
+    mll = -x[1]
     for j in 1:J
         lgμ_j = x[2] + x[3] *z1[j]+ x[4] *z2[j]
         μ_j   = exp(lgμ_j)
@@ -62,12 +62,6 @@ start2= [-0.15, 13, -0.1, -5]
 zzsk  =  zz(; NS=1000, x0_0=start, tmax=0.02)
 zzsk2 =  zz(; NS=1000, x0_0=start2, tmax=0.02)
 
-
-f2=tmplot(R=50, try_tmax=[0.01, 0.015, 0.02, 0.025,0.03, 0.04, 0.05],
-    start=[-0.41, 9.5, -0.35, -2.1])
-savefig(f2, string(SAVEwd, "4parsf2.pdf"))
-tmax_tuned=0.025
-
 p1=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 2], title=dimnames[1])
 plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 2], title=dimnames[1])
 p2=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 3], title=dimnames[2])
@@ -78,7 +72,23 @@ p4=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 5], title=dimnames[4])
 plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 5], title=dimnames[4])
 p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
 
-savefig(p5, string(SAVEwd, "4parsk.pdf"))
+
+
+f2=tmplot(R=50, try_tmax=[0.01, 0.015, 0.02, 0.025,0.03, 0.04, 0.05],
+    start=[-0.41, 9.5, -0.35, -2.1])
+savefig(f2, string(SAVEwd, "4parsf2.pdf"))
+tmax_tuned=0.025
+
+
+start2= [-0.15, 13, -0.1, -5]
+zzsk_plot  =  zz(; NS=2000, x0_0=start2, tmax=tmax_tuned)
+
+p1=plot(zzsk_plot["SK"][:, 1], zzsk_plot["SK"][:, 2], title=dimnames[1])
+p2=plot(zzsk_plot["SK"][:, 1], zzsk_plot["SK"][:, 3], title=dimnames[2])
+p3=plot(zzsk_plot["SK"][:, 1], zzsk_plot["SK"][:, 4], title=dimnames[3])
+p4=plot(zzsk_plot["SK"][:, 1], zzsk_plot["SK"][:, 5], title=dimnames[4])
+p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
+savefig(p5, string(SAVEwd, "out4par1skel.pdf"))
 
 # inspection of the zz from mode
 
@@ -265,8 +275,7 @@ density!(zzsm[1000:10000, 4], color=:blue, linewidth=3, alpha=0.7)
 f58 = plot(f58a, f58b, f58c, f58d, layout=(2, 2), size=(1000, 800))
 savefig(f58, string(SAVEwd, "/f58.pdf"))
 
-r_ess=10
-
+r_ess=100
 zzs = Dict()
 hmcs= Dict()
 for r in 1:r_ess
