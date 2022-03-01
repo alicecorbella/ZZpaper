@@ -18,5 +18,3 @@ using SpecialFunctions
 using JLD
 using LatexPrint
 using Latexify
-
-gr(size = (500, 400), legend = false)

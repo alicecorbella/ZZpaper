@@ -1,4 +1,8 @@
 
+function pt(mm)
+    pt = 2.8346456693*mm
+    return pt
+end
 
 function densplot(; Ux=U, xrange=[-1.5,1.5], yrange=[-1.5,1.5], col=false)
     outplot=contour(range(xrange[1], xrange[2], length=100),
@@ -24,19 +28,18 @@ function tmplot(;R = 50, try_tmax, ns=1000, start=missing)
             tpp_tmax[i,t] =sum(sk1["GradientEvaluations"][3,:])
         end
     end
-    p1=violin(string.(transpose(try_tmax)), tpp_tmax, color=:blue, alpha=0.7,
-        title=("Gradient evaluations for \nthe NHPP via thinning"),
-        ylabel="count ∇U(x)", xlabel="tₘₐₓ")
+    p1=violin(string.(transpose(try_tmax)), tpp_tmax, color=:gray,
+        ylabel=("count of ∇U(x) \nin NHPP thinning"), xlabel="tₘₐₓ",
+         size=(pt(84), pt(60)), linewidth=.5)
     # plot!(string.(transpose(try_tmax)), transpose(mapslices(mean, tpp_tmax, dims=1)), color=:black, linewidth=2)
-    p2=violin(string.(transpose(try_tmax)), opt_tmax, color=:blue, alpha=0.7,
-        title=("Gradient evaluations for \nthe optimization routine"),
-        ylabel="count ∇U(x)", xlabel="tₘₐₓ")
+    p2=violin(string.(transpose(try_tmax)), opt_tmax, color=:gray, linewidth=.5,
+        ylabel=("count of ∇U(x) \nin optimization "),
+        xlabel="tₘₐₓ", size=(pt(84), pt(60)))
     # plot!(try_tmax, transpose(mapslices(mean, opt_tmax, dims=1)), color=:black, linewidth=2)
-    p3=violin(string.(transpose(try_tmax)), opt_tmax+tpp_tmax, color=:blue, alpha=0.7,
-        title=("Total gradient evaluations"),
-        ylabel="count ∇U(x)", xlabel="tₘₐₓ")
+    p3=violin(string.(transpose(try_tmax)), opt_tmax+tpp_tmax, color=:gray, linewidth=.5,
+        ylabel=("count of ∇U(x)"), xlabel="tₘₐₓ", size=(pt(84), pt(60)))
     # plot!(try_tmax, transpose(mapslices(mean, opt_tmax+tpp_tmax, dims=1)), color=:black, linewidth=2)
-    outplot = plot(p1,p2,p3, layout=(1, 3), size = (1200, 400))
+    outplot = Dict([("NHPP", p1), ("opt", p2), ("tot", p3)])#plot(p1,p2,p3, layout=(3, 1), size=(238, 600))
     return outplot
 end
 
@@ -46,11 +49,16 @@ function tailstart(; xrange, yrange, nside)
         reverse(range(xrange[1], xrange[2], length=nside)), ones(nside)*xrange[1])
     starty=vcat(ones(nside)*yrange[1], range(yrange[1], yrange[2], length=nside),
         ones(nside)*yrange[2], reverse(range(yrange[1], yrange[2], length=nside)))
-    outplot=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (500, 400))
+    endxy =  Array{Float64, 2}(undef, length(starty),2)
+    outplot=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
     for r in 1:length(startx)
         zzsk =  zz(; NS=1000, x0_0=[startx[r], starty[r]], tmax=tmax_tuned)
-        plot!(zzsk["SK"][:, 2], zzsk["SK"][:, 3])
+        plot!(zzsk["SK"][:, 2], zzsk["SK"][:, 3], color=:gray, linewidth=0.3)
+        endxy[r, :] = zzsk["SK"][1000, 2:3]
     end
+    plot!(startx, starty, seriestype=:scatter, markersize=2, color=:black)
+    plot!(endxy[:,1], endxy[:,2], seriestype=:scatter,
+            markersize=2, markershape=:star5, color=:black)
     return outplot
 end
 
@@ -60,22 +68,27 @@ function tailstart_hmc(; xrange, yrange, nside)
         reverse(range(xrange[1], xrange[2], length=nside)), ones(nside)*xrange[1])
     starty=vcat(ones(nside)*yrange[1], range(yrange[1], yrange[2], length=nside),
         ones(nside)*yrange[2], reverse(range(yrange[1], yrange[2], length=nside)))
-    outplot=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (500, 400))
+    endxy =  Array{Float64, 2}(undef, length(starty),2)
+    outplot=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
     for r in 1:length(startx)
         hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=[startx[r], starty[r]])
-        plot!(hmc["SampleQ"][:, 1], hmc["SampleQ"][:, 2])
+        plot!(hmc["SampleQ"][:, 1], hmc["SampleQ"][:, 2], color=:gray, linewidth=0.3)
+        endxy[r, :] = hmc["SampleQ"][1000, 1:2]
     end
+    plot!(startx, starty, seriestype=:scatter, markersize=2, color=:black)
+    plot!(endxy[:,1], endxy[:,2], seriestype=:scatter,
+            markersize=2, markershape=:star5, color=:black)
     return outplot
 end
 
-function tailend_hmc(; xrange, yrange, nside)
-    startx=vcat(range(xrange[1], xrange[2], length=nside), xrange[2]*ones(nside),
-        reverse(range(xrange[1], xrange[2], length=nside)), ones(nside)*xrange[1])
-    starty=vcat(ones(nside)*yrange[1], range(yrange[1], yrange[2], length=nside),
-        ones(nside)*yrange[2], reverse(range(yrange[1], yrange[2], length=nside)))
-    outplot=plot(startx,starty,seriestype=:scatter, xlabel="X₁", ylabel="X₂", size = (500, 400))
-    return outplot
-end
+# function tailend_hmc(; xrange, yrange, nside)
+#     startx=vcat(range(xrange[1], xrange[2], length=nside), xrange[2]*ones(nside),
+#         reverse(range(xrange[1], xrange[2], length=nside)), ones(nside)*xrange[1])
+#     starty=vcat(ones(nside)*yrange[1], range(yrange[1], yrange[2], length=nside),
+#         ones(nside)*yrange[2], reverse(range(yrange[1], yrange[2], length=nside)))
+#     outplot=plot(startx,starty,seriestype=:scatter, xlabel="X₁", ylabel="X₂", size = (500, 400))
+#     return outplot
+# end
 
 function bs_zz(;try_nb, ZZs = zzs, D=Dim)
     R=length(ZZs)
@@ -89,8 +102,8 @@ function bs_zz(;try_nb, ZZs = zzs, D=Dim)
         end
     end
     zzmeanESS_nb =  mapslices(mean, zzESS_nb, dims = [1])
-    outplot=plot(string.((try_nb)), zzmeanESS_nb[1,:,:], title="ZZ - Average ESS per dimensions",
-        xlabel="Number of batches", ylabel="Mean ESS", legend=true,
+    outplot=plot(string.((try_nb)), zzmeanESS_nb[1,:,:],
+        xlabel="Number of batches", ylabel="Mean ESS - ZZ", legend=true,
         labels=string.("dim", transpose(1:Dim)))
     return outplot
 end
@@ -108,8 +121,8 @@ function bs_hmc(;try_nb, HMCs = hmcs, D=Dim)
         end
     end
     hmcmeanESS_nb =  mapslices(mean, hmcESS_nb, dims = [1])
-    outplot=plot(string.((try_nb)), hmcmeanESS_nb[1,:,:], title="HMC - Average ESS per dimensions",
-        xlabel="Number of batches", ylabel="Mean ESS", legend=true,
+    outplot=plot(string.((try_nb)), hmcmeanESS_nb[1,:,:],
+        xlabel="Number of batches", ylabel="Mean ESS - HMC", legend=true,
         labels=string.("dim", transpose(1:Dim)))
     return outplot
 end
