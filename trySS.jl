@@ -1,6 +1,6 @@
 # Direcotries
 CODEwd = "/Users/alice/projects/ZZpaper/"
-SAVEwd = "/Users/alice/OneDrive - University of Warwick/Manuscripts/04ADZZ/figures/sec6.2/"
+SAVEwd = "/Users/alice/OneDrive - University of Warwick/Manuscripts/04ADZZ/figures/prova/"
 
 # Loading the packages
 include(string(CODEwd, "env.jl"))
@@ -49,75 +49,18 @@ function U(x::Vector; t = t_vec, c = c_vec, z1= z1_vec, z2=z2_vec)
     return mll
 end
 
-
-U([-0.5, +9, -0.4, -0.4])
-
-Dim  =4
-start = [-0.4, +9, -0.4, -0.4]
-start2= [-0.45, 10, -0.5, -3]
-zzsk  =  zz(; NS=5000, x0_0=start, tmax=0.01)
-zzsk2 =  zz(; NS=5000, x0_0=start2, tmax=0.01)
-JLD.save(string(SAVEwd, "/zzALLOBS.jld"),
-    Dict("zz1"=>zzsk, "zz2"=>zzsk2))
 zzlong=JLD.load(string(SAVEwd, "/zzALLOBS.jld"))
 zzsk=zzlong["zz1"]
 zzsk2=zzlong["zz2"]
-
-p1=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 2], title=dimnames[1])
-plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 2], title=dimnames[1])
-p2=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 3], title=dimnames[2])
-plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 3], title=dimnames[2])
-p3=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 4], title=dimnames[3])
-plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 4], title=dimnames[3])
-p4=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 5], title=dimnames[4])
-plot!(zzsk2["SK"][:, 1], zzsk2["SK"][:, 5], title=dimnames[4])
-p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
-
-# savefig(p5, string(SAVEwd, "4parsk.pdf"))
-
 # obtain an estimate of the mode to
 smp = zzsample(N=5000, sk=zzsk)
 smp2 = zzsample(N=5000, sk=zzsk2)
 
 med1=quantile(vcat(smp[3000:5000, 1],smp[3000:5000, 1]), 0.5)
-p1=density(vcat(smp[3000:5000, 1], smp2[3000:5000, 1]), linewidth=2,
-    title=string(dimnames[1],", Me=", round(med1, digits=3)))
-vline!([med1], color=:black, linewidth=2)
-
 med2=quantile(vcat(smp[3000:5000, 2],smp[3000:5000, 2]), 0.5)
-p2=density(vcat(smp[3000:5000, 2], smp2[3000:5000, 2]), linewidth=2,
-    title=string(dimnames[2],", Me=", round(med2, digits=3)))
-vline!([med2], color=:black, linewidth=2)
-
 med3=quantile(vcat(smp[3000:5000, 3],smp[3000:5000, 3]), 0.5)
-p3=density(vcat(smp[3000:5000, 3], smp2[3000:5000, 3]), linewidth=2,
-    title=string(dimnames[3],", Me=", round(med3, digits=3)))
-vline!([med3], color=:black, linewidth=2)
-
 med4=quantile(vcat(smp[3000:5000, 4],smp[3000:5000, 4]), 0.5)
-p4=density(vcat(smp[3000:5000, 4], smp2[3000:5000, 4]), linewidth=2,
-    title=string(dimnames[1],", Me=", round(med4, digits=3)))
-vline!([med4], color=:black, linewidth=2)
-
-p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
-# savefig(p5, string(SAVEwd, "4parsmp.pdf"))
-
-
-
-# lets try and find the optimal tmax from the mode
-tmplot(;R = 4, try_tmax=[0.0005, 0.001, 0.002, 0.005],
-    ns=500, start=[med1, med2, med3, med4])
-# savefig(string(SAVEwd, "4partmt.pdf"))
-
-zzsk_short  =  zz(; NS=50, x0_0=[med1, med2, med3, med4], tmax=0.001)
-
-for d in 1:4
-    dplot[d] = plot(zzsk_short["SK"][:, 1], zzsk_short["SK"][:, d+1], title=dimnames[d])
-end
-
-plot(dplot[1],dplot[2],dplot[3],dplot[4], layout=(2,2), size=(600,600))
-
-# SUBSAMPLING
+tmax_tuned=0.0001
 
 
 function Uj(x::Vector;j::Vector{Int},  t = t_vec, c = c_vec, z1= z1_vec, z2=z2_vec)
@@ -224,74 +167,15 @@ savefig(p4, string(SAVEwd, "SS4.pdf"))
 
 
 
+zzskss_frommode_10=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.002,ssM =1000,
+        NOBS=length(t_vec), ssS=10)
 zzskss_frommode_20=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.002,ssM =1000,
         NOBS=length(t_vec), ssS=20)
-zzskss_frommode_20_bis=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.001,ssM =1000,
-        NOBS=length(t_vec), ssS=20)
-zzskss_frommode_20_tris=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.001,ssM =1000,
-        NOBS=length(t_vec), ssS=20)
-
 zzskss_frommode_50=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.002,ssM =1000,
         NOBS=length(t_vec), ssS=50)
-zzskss_frommode_50_bis=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.001,ssM =1000,
-        NOBS=length(t_vec), ssS=50)
-zzskss_frommode_50_tris=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.001,ssM =1000,
-        NOBS=length(t_vec), ssS=50)
-
-x_dict=Dict()
-for d in 1:Dim
-    px=plot(zzsk["SK"][:, 1], zzsk["SK"][:, d+1], label="All obs",
-        title=dimnames[d],legend=true,linewidth=0.5, color=:black)
-    plot!(zzskss_frommode_20["SK"][:, 1], zzskss_frommode_20["SK"][:, d+1],
-        label="20 ss", linewidth=0.5, color=:blue)
-    plot!(zzskss_frommode_20_bis["SK"][:, 1], zzskss_frommode_20_bis["SK"][:, d+1],
-            label="20 ss (II)", linewidth=0.5, color=:lightblue)
-    plot!(zzskss_frommode_20_tris["SK"][:, 1], zzskss_frommode_20_tris["SK"][:, d+1],
-            label="20 ss (III)", linewidth=0.5, color=:darkblue)
-    plot!(zzskss_frommode_50["SK"][:, 1], zzskss_frommode_50["SK"][:, d+1],
-        label="50 ss", linewidth=0.5, color=:green)
-    plot!(zzskss_frommode_50_bis["SK"][:, 1], zzskss_frommode_50_bis["SK"][:, d+1],
-            label="50 ss (II)", linewidth=0.5, color=:lightgreen)
-    plot!(zzskss_frommode_50_tris["SK"][:, 1], zzskss_frommode_50_tris["SK"][:, d+1],
-            label="50 ss (III)", linewidth=0.5, color=:darkgreen)
-    px_dict[d]=px
-end
-
-pxsk=plot(px_dict[1], px_dict[2], px_dict[3], px_dict[4], layout=(2,2), size=(1000,800))
-savefig(pxsk, string(SAVEwd, "pxsk.pdf"))
-
-smpALLI  = zzsample(N=2000, sk=zzsk)
-smpALLII = zzsample(N=2000, sk=zzsk2)
-smp20I   = zzsample(N=1000, sk=zzskss_frommode_20)
-smp20II  = zzsample(N=1000, sk=zzskss_frommode_20_bis)
-smp20III = zzsample(N=1000, sk=zzskss_frommode_20_tris)
-smp50I   = zzsample(N=1000, sk=zzskss_frommode_50)
-smp50II  = zzsample(N=1000, sk=zzskss_frommode_50_bis)
-smp50III = zzsample(N=1000, sk=zzskss_frommode_50_tris)
-
-
-
-pm_dict=Dict()
-for d in 1:Dim
-    pm=density(smpALLI[1001:2000, d],legend=true,linewidth=1, label="All obs", color=:black)
-    density!(smpALLII[1001:2000, d],legend=true,linewidth=1, color=:black)
-    density!(smp20I[:, d],label="20 ss", linewidth=0.5, color=:blue)
-    density!(smp20II[:, d], label="20 ss (II)", linewidth=0.5, color=:lightblue)
-    density!(smp20III[:, d],label="20 ss (III)", linewidth=0.5, color=:darkblue)
-    density!(smp50I[:, d],label="50 ss", linewidth=0.5, color=:green)
-    density!(smp50II[:, d],label="50 ss (II)", linewidth=0.5, color=:lightgreen)
-    density!(smp50III[:, d],label="50 ss (III)", linewidth=0.5, color=:darkgreen)
-    pm_dict[d]=pm
-end
-
-pmsm=plot(pm_dict[1], pm_dict[2], pm_dict[3], pm_dict[4], layout=(2,2), size=(1000,800))
-savefig(pmsm, string(SAVEwd, "pmsm.pdf"))
-
-
-
-
-
-px1=plot(zzsk["SK"][:, 1], zzsk["SK"][:, 2], label="All obs", linewidth=0.5)
+px1=plot(zzskss_frommode_50["SK"][:, 1], zzskss_frommode_50["SK"][:, 2],
+    title=dimnames[1],label="50 ss", legend=true, linewidth=0.5)
+plot!(zzsk["SK"][:, 1], zzsk["SK"][:, 2], label="All obs", linewidth=0.5)
 plot!(zzskss_frommode_20["SK"][:, 1], zzskss_frommode_20["SK"][:, 2],
     label="20 ss", linewidth=0.5)
 
@@ -313,7 +197,8 @@ savefig(px3, string(SAVEwd, "SS3_fm.pdf"))
 savefig(px4, string(SAVEwd, "SS4_fm.pdf"))
 
 
-smp = zzsample(N=1000, sk=zzsk)
+smp = zzsample(N=5000, sk=zzsk)
+smp_50ss = zzsample(N=5000, sk=zzskss_frommode_50)
 smp_20ss = zzsample(N=5000, sk=zzskss_frommode_20)
 
 density(smp[3000:5000, 1], color=:orange, linewidth=2)
@@ -327,3 +212,64 @@ density!(smp_50ss[2000:5000, 3], color=:blue, linewidth=2)
 density(smp[2000:3500, 4], color=:orange, linewidth=2)
 density!(smp_50ss[2000:5000, 4], color=:blue, linewidth=2)
 density!(smp[3501:5000, 4], color=:red, linewidth=2)
+
+
+
+
+
+ESS_wholedata = zeros(4)
+ESS_withSS  = zeros(4)
+for d in 1:4
+    ESS_wholedata[d]=ESSbm(smpl=smp[2000:5000, d], nbatches=25)
+    ESS_withSS[d]=ESSbm(smpl=smp_50ss[2000:5000, d], nbatches=25)
+end
+ESS_wholedata
+
+ESS_withSS
+
+print(round.(hcat(ESS_withSS, ESS_wholedata), digits=2))
+
+# # reduced skeleton without burnin
+# sk_red=Dict([("SkeletonLocation", zzsk["SkeletonLocation"][:, 2000:5000]),
+#         ("SkeletonVelocity", zzsk["SkeletonVelocity"][:, 2000:5000]),
+#         ("SkeletonTime", zzsk["SkeletonTime"][:, 2000:5000])])
+#
+# sk_ss_red=Dict([("SkeletonLocation", zzskss_frommode_50["SkeletonLocation"][:, 2000:5000]),
+#         ("SkeletonVelocity", zzskss_frommode_50["SkeletonVelocity"][:, 2000:5000]),
+#         ("SkeletonTime", zzskss_frommode_50["SkeletonTime"][:, 2000:5000])])
+#
+
+
+
+
+
+
+
+start = [-0.4, +9, -0.4, -0.4]
+start2= [-0.45, 10, -0.5, -3]
+
+start3= [-1, 9, -1, -1]
+
+
+
+# parameters HMC
+Lε_tuned=0.001
+L_tuned=2
+
+hmc1 = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=5000,
+    qs=start)
+
+hmc2 = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100,
+    qs=start3)
+
+
+plot(hmc2["SampleQ"][:, 1], title=dimnames[1])
+plot(hmc2["SampleQ"][:, 2], title=dimnames[2])
+plot(hmc2["SampleQ"][:, 1], title=dimnames[3])
+plot(hmc2["SampleQ"][:, 1], title=dimnames[4])
+
+
+plot(autocor(hmc["SampleQ"][:, 1]))
+plot!(autocor(hmc["SampleQ"][:, 2]))
+plot!(autocor(hmc["SampleQ"][:, 3]))
+plot!(autocor(hmc["SampleQ"][:, 4]))

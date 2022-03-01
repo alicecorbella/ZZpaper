@@ -1,6 +1,6 @@
 # Direcotries
 CODEwd = "/Users/alice/projects/ZZpaper/"
-SAVEwd = "/Users/alice/OneDrive - University of Warwick/Manuscripts/04ADZZ/figures/sec6.2/"
+SAVEwd = "/Users/alice/OneDrive - University of Warwick/Manuscripts/04ADZZ/figures/sec5.2/"
 
 # Loading the packages
 include(string(CODEwd, "env.jl"))
@@ -9,6 +9,7 @@ include(string(CODEwd, "functions.jl"))
 include(string(CODEwd, "plotting.jl"))
 
 
+r_tmax=100
 r_insp=10
 r_ess=100
 budget=200000
@@ -53,9 +54,45 @@ function U(x::Vector; t = t_vec, c = c_vec, z1= z1_vec, z2=z2_vec)
     return mll
 end
 
+opti = optimize(U, [-0.3, 10.0, 0, -1.5])
+x̃=opti.minimizer
+# profile likelihoods
+r_halfwidth= [2,10, 3,3]
+plot(x -> U(vcat(x, x̃[2:4])), xlims=(x̃[1]-r_halfwidth[1], x̃[1]+r_halfwidth[1]))
+plot(x -> U(vcat(x̃[1],x, x̃[3:4])), xlims=(x̃[2]-r_halfwidth[2], x̃[2]+r_halfwidth[2]))
+plot(x -> U(vcat(x̃[1:2],x, x̃[4])), xlims=(x̃[3]-r_halfwidth[3], x̃[3]+r_halfwidth[3]))
+plot(x -> U(vcat(x̃[1:3], x)), xlims=(x̃[4]-r_halfwidth[4], x̃[4]+r_halfwidth[4]))
+
+# profile likelihoods on larger ranges
+r_halfwidth= [2,10, 3,3]*5
+plot(x -> U(vcat(x, x̃[2:4])), xlims=(x̃[1]-r_halfwidth[1], x̃[1]+r_halfwidth[1]))
+plot(x -> U(vcat(x̃[1],x, x̃[3:4])), xlims=(x̃[2]-r_halfwidth[2], x̃[2]+r_halfwidth[2]))
+plot(x -> U(vcat(x̃[1:2],x, x̃[4])), xlims=(x̃[3]-r_halfwidth[3], x̃[3]+r_halfwidth[3]))
+plot(x -> U(vcat(x̃[1:3], x)), xlims=(x̃[4]-r_halfwidth[4], x̃[4]+r_halfwidth[4]))
+
+
+contour(range(-.5, -.45, length=100),range(9.3,9.8, length=100),
+    [(U([x,y, x̃[3], x̃[4]])) for x in range(-.5, -.45, length=100),
+        y in range(9.3,9.8, length=100)], width=1,
+        legend=true, xlabel=dimnames[1], ylabel=dimnames[2])
+
+
+contour(range(-.5, -.45, length=100),range(-.75,-0.7, length=100),
+    [(U([x,x̃[2],y,x̃[4]])) for x in range(-.5, -.45, length=100),
+        y in range(-.75,-0.7, length=100)], width=1,
+        legend=true, xlabel=dimnames[1], ylabel=dimnames[3])
+
+contour(range(-.5, -.45, length=100),range(-3,-2, length=100),
+    [(U([x,x̃[2], x̃[3],y])) for x in range(-.5, -.45, length=100),
+        y in range(-3,-2, length=100)], width=1,
+        legend=true, xlabel=dimnames[1], ylabel=dimnames[4])
+
+
+
 
 U([-0.5, +9, -0.4, -0.4])
-
+U([4, 10, 5, 5])
+x=[4, 10, 5, 5]
 Dim  =4
 start = [-0.5, +9, -0.4, -0.4]
 start2= [-0.15, 13, -0.1, -5]
@@ -74,10 +111,10 @@ p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
 
 
 
-f2=tmplot(R=50, try_tmax=[0.01, 0.015, 0.02, 0.025,0.03, 0.04, 0.05],
+f2=tmplot(R=r_tmax, try_tmax=[0.05, 0.075, 0.1, 0.15, 0.2],
     start=[-0.41, 9.5, -0.35, -2.1])
-savefig(f2, string(SAVEwd, "4parsf2.pdf"))
-tmax_tuned=0.025
+savefig(f2, string(SAVEwd, "f2.pdf"))
+tmax_tuned=0.1
 
 
 start2= [-0.15, 13, -0.1, -5]
@@ -128,21 +165,25 @@ savefig(f3, string(SAVEwd, "/f3.pdf"))
 # -5, -1, 1, 5
 
 # f4 - inspection of the zig zag from tail
-startvalues=hcat([-3,-20,-5,-5], [-1,-10,-1,-1], [1,20,5,5],
-        [3, 10, 5, 5], [-1,20, 5, -5], [-1, -20, 5, 1])
-SKinsp= Array{Float64, 3}(undef, 5000, Dim, size(startvalues)[2])
-TMinsp= Array{Float64, 3}(undef, 5000, 1, size(startvalues)[2])
+# startvalues=hcat([-3,-20,-5,-5], [-1,-10,-1,-1], [1,20,5,5],
+#         [3, 10, 5, 5], [-1,20, 5, -5], [-1, -20, 5, 1])
+SKsize=100
+SKinsp= Array{Float64, 3}(undef, SKsize, Dim, size(startvalues)[2])
+TMinsp= Array{Float64, 3}(undef, SKsize, 1, size(startvalues)[2])
 for r in 1:size(startvalues)[2]
-    print(U(startvalues[:, r]))
-    zzsk =  zz(; NS=5000, x0_0=startvalues[:, r], tmax=tmax_tuned)
+    # print(U(startvalues[:, r]))
+    # sample([-10,10], 4)
+    start=[sample([-2,2]), sample([-2,2]),
+            sample([-2,2]), sample([-2,2])]
+    print(start)
+    zzsk =  zz(; NS=SKsize, x0_0=start, tmax=tmax_tuned)
     SKinsp[:,:,r] = zzsk["SK"][:, 2:(Dim+1)]
     TMinsp[:,:,r] = zzsk["SK"][:, 1]
-    print(r)
 end
 
 
 f4a=plot(0,0, alpha=0, xlabel="Time", ylabel=dimnames[1])
-for r in 1:size(startvalues)[2]
+for r in 1:3#size(startvalues)[2]
     plot!(TMinsp[:, 1, r], SKinsp[:,1,r])
 end
 f4b=plot(0,0, alpha=0, xlabel="Time", ylabel=dimnames[2])
@@ -174,7 +215,7 @@ savefig(f5, string(SAVEwd, "/f5.pdf"))
 
 
 # parameters HMC
-Lε_tuned=0.05
+Lε_tuned=0.08
 L_tuned=3
 
 hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=start)
@@ -224,27 +265,27 @@ f6 = plot(f6a, f6b, f6c, f6d, layout=(2, 2), size=(1000, 800))
 savefig(f6, string(SAVEwd, "/f6.pdf"))
 
 # inspection of the hmc from far (same values as before)
-HMCinsp= Array{Float64, 3}(undef, 5000, Dim, size(startvalues)[2])
+HMCinsp= Array{Float64, 3}(undef, 10000, Dim, size(startvalues)[2])
 for r in 1: size(startvalues)[2]
-    hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=5000,qs=startvalues[:,r])
+    hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=10000,qs=startvalues[:,r])
     HMCinsp[:,:,r] = hmc["SampleQ"][1:10000, 1:(Dim)]
 end
 
 HMCinsp
 
-f7a=plot(0,0, alpha=0, xlabel="Time", ylabel=dimnames[1])
+f7a=plot(0,0, alpha=0, xlabel="Iterations", ylabel=dimnames[1])
 for r in 1:size(startvalues)[2]
     plot!(HMCinsp[:,1,r])
 end
-f7b=plot(0,0, alpha=0, xlabel="Time", ylabel=dimnames[2])
+f7b=plot(0,0, alpha=0, xlabel="Iterations", ylabel=dimnames[2])
 for r in 1:size(startvalues)[2]
     plot!(HMCinsp[:,2,r])
 end
-f7c=plot(0,0, alpha=0, xlabel="Time", ylabel=dimnames[3])
+f7c=plot(0,0, alpha=0, xlabel="Iterations", ylabel=dimnames[3])
 for r in 1:size(startvalues)[2]
     plot!(HMCinsp[:,3,r])
 end
-f7d=plot(0,0, alpha=0, xlabel="Time", ylabel=dimnames[4])
+f7d=plot(0,0, alpha=0, xlabel="Iterations", ylabel=dimnames[4])
 for r in 1:size(startvalues)[2]
     plot!(HMCinsp[:,4,r])
 end
@@ -293,7 +334,7 @@ nbZZ_tuned = 100
 # f10 - chose nbatches for hmc
 f10= bs_hmc(;try_nb=[5, 10,25, 50, 100, 500])
 savefig(f10, string(SAVEwd, "/f10.pdf"))
-nbHMC_tuned = 50
+nbHMC_tuned = 100
 
 # summaries and f11 - plot of the ESS
 outESS = ESSsummaries()
