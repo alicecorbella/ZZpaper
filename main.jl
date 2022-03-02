@@ -26,7 +26,6 @@ pt(78)
 
 gr(size = (pt(84), pt(84)), labelfontsize=8, legend = false)
 
-
 # -----------------------------------------
 # Example on Bivariate Isotropic normal
 # -----------------------------------------
@@ -57,7 +56,7 @@ tmax_tuned=2.5
 
 # f3 - inspection of the zig zag from mode
 # multiple chains from the center
-f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
 for r in 1:r_insp
@@ -100,7 +99,7 @@ L_tuned=2
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
 
-f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 for r in 1:r_insp
     start= rand(MvNormal(μ,Σ))
     startpoints[r, :] = start
@@ -212,7 +211,7 @@ tmax_tuned=1
 
 # f3 - inspection of the zig zag from mode
 # multiple chains from the center
-f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
 for r in 1:r_insp
@@ -253,7 +252,7 @@ L_tuned=3
 # multiple chains from the center
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
-f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 for r in 1:r_insp
     start= rand(MvNormal(μ,Σ))
     startpoints[r, :] = start
@@ -355,11 +354,11 @@ savefig(f2["tot"], string(SAVEwd, NameEx, "/f2c.pdf"))
 f2tot= plot(f2["NHPP"],f2["opt"],f2["tot"], layout=(1,3),
     size=(pt(252), pt(60)))
 savefig(f2tot, string(SAVEwd, NameEx, "/f2.pdf"))
-tmax_tuned=4
+tmax_tuned=3.5
 
 # f3 - inspection of the zig zag from mode
 # multiple chains from the center
-f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
 for r in 1:r_insp
@@ -384,12 +383,12 @@ savefig(f4, string(SAVEwd, NameEx, "/f4.pdf"))
 
 
 # f5 - density inspection
-zzsk = zz(; NS=100000, x0_0=start, tmax=tmax_tuned)
+zzsk = zz(; NS=100000, x0_0=rand(MvNormal(μ,Σ)), tmax=tmax_tuned)
 zzsm = zzsample(;N=10000, sk=zzsk)
 f5=plot(zzsm[:, 1], zzsm[:, 2], seriestype=:scatter,
         color=:black, alpha=0.5, markersize=2,
         xlabel="X₁", ylabel="X₂")
-contour!(range(-4, 4, length=100),range(-4,4, length=100),[(pdf(MvNormal(μ, Σ), [x,y])) for y in range(-4, 4, length=100), x in range(-4,4, length=100)],
+contour!(range(-4, 4, length=100),range(-40,40, length=100),[(pdf(MvNormal(μ, Σ), [x,y])) for y in range(-40, 40, length=100), x in range(-4,4, length=100)],
     fill=(false,cgrad(:grays,[0,0.1,1.0])), color=:lightgray, linewidth=.5)
 savefig(f5, string(SAVEwd, NameEx, "/f5.pdf"))
 
@@ -402,7 +401,7 @@ L_tuned=2
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
 
-f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 for r in 1:r_insp
     start= rand(MvNormal(μ,Σ))
     startpoints[r, :] = start
@@ -421,7 +420,7 @@ f7=tailstart_hmc(xrange=[-lim1, lim1], yrange=[-lim2, lim2], nside=10)
 savefig(f7, string(SAVEwd, NameEx, "/f7.pdf"))
 
 # f8 - density hmc
-hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=start)
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=rand(MvNormal(μ,Σ)))
 f8=plot(hmc["SampleQ"][1:10:100000, 1], hmc["SampleQ"][1:10:100000, 2], seriestype=:scatter,
         color=:black, alpha=0.5, markersize=2, xlabel="X₁", ylabel="X₂")
 contour!(range(-4, 4, length=100),range(-40,40, length=100),[(pdf(MvNormal(μ, Σ), [x,y])) for y in range(-40, 40, length=100), x in range(-4,4, length=100)], fill=(false,cgrad(:grays,[0,0.1,1.0]))
@@ -445,9 +444,9 @@ savefig(f9, string(SAVEwd, NameEx, "/f9.pdf"))
 nbZZ_tuned = 100
 
 # f10 - chose nbatches for hmc
-f10= bs_hmc(;try_nb=[10, 100, 500, 1000, 2000])
+f10= bs_hmc(;try_nb=[ 5, 10, 100, 500, 1000, 2000])
 savefig(f10, string(SAVEwd, NameEx, "/f10.pdf"))
-nbHMC_tuned = 100
+nbHMC_tuned = 10
 
 # summaries and f11 - plot of the ESS
 outESS = ESSsummaries()
@@ -520,7 +519,7 @@ tmax_tuned=4
 
 # f3 - inspection of the zig zag from mode
 # multiple chains from the center
-f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
 for r in 1:r_insp
@@ -546,14 +545,15 @@ savefig(f4, string(SAVEwd, NameEx, "/f4.pdf"))
 
 
 # f5 - density inspection
-zzsk = zz(; NS=100000, x0_0=start, tmax=tmax_tuned)
+zzsk = zz(; NS=100000, x0_0=ifelse(rand([1,2])==1,
+        rand(MvNormal(μ₁,Σ₁)), rand(MvNormal(μ₂,Σ₂))), tmax=tmax_tuned)
 zzsm = zzsample(;N=10000, sk=zzsk)
 f5=plot(zzsm[:, 1], zzsm[:, 2], seriestype=:scatter,
         color=:black, alpha=0.5, markersize=2,
         xlabel="X₁", ylabel="X₂")
-contour!(range(-4, 4, length=100),range(-4,4, length=100),
-    [(exp(-U([x,y]))) for y in range(-4, 4, length=100),
-        x in range(-4,4, length=100)],
+contour!(range(-6, 6, length=100),range(-6,6, length=100),
+    [(exp(-U([x,y]))) for y in range(-6, 6, length=100),
+        x in range(-6,6, length=100)],
         fill=(false,cgrad(:grays,[0,0.1,1.0])), color=:lightgray,linewidth=.5)
 savefig(f5, string(SAVEwd, NameEx, "/f5.pdf"))
 
@@ -572,7 +572,7 @@ sum(hmc["accept"])/1000
 # multiple chains from the center
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
-f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 for r in 1:r_insp
     mixt = sample([1,2])
     start= ifelse(mixt==1, rand(MvNormal(μ₁,Σ₁)), rand(MvNormal(μ₂,Σ₂)))
@@ -592,12 +592,13 @@ f7=tailstart_hmc(xrange=[-lim, lim], yrange=[-lim, lim], nside=10)
 savefig(f7, string(SAVEwd, NameEx, "/f7.pdf"))
 
 # f8 - density hmc
-hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=start)
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=ifelse(rand([1,2])==1,
+        rand(MvNormal(μ₁,Σ₁)), rand(MvNormal(μ₂,Σ₂))))
 f8=plot(hmc["SampleQ"][1:10:100000, 1], hmc["SampleQ"][1:10:100000, 2], seriestype=:scatter,
         color=:black, alpha=0.5, markersize=2, xlabel="X₁", ylabel="X₂")
-contour!(range(-4, 4, length=100),range(-4,4, length=100),
-    [(exp(-U([x,y]))) for y in range(-4, 4, length=100),
-        x in range(-4,4, length=100)],
+contour!(range(-6, 6, length=100),range(-6,6, length=100),
+    [(exp(-U([x,y]))) for y in range(-6, 6, length=100),
+        x in range(-6,6, length=100)],
         fill=(false,cgrad(:grays,[0,0.1,1.0]))
             , color=:lightgray, linewidth=0.5)
 savefig(f8, string(SAVEwd, NameEx, "/f8.pdf"))
@@ -616,7 +617,7 @@ end
 # f9 - chose nbatches for zz
 f9= bs_zz(;try_nb=[3, 5, 10, 50, 100, 200, 500])
 savefig(f9, string(SAVEwd, NameEx, "/f9.pdf"))
-nbZZ_tuned = 50
+nbZZ_tuned = 10
 
 # f10 - chose nbatches for hmc
 f10= bs_hmc(;try_nb=[5, 10, 100, 500, 1000, 2000])
@@ -686,7 +687,7 @@ tmax_tuned=1.5
 
 # f3 - inspection of the zig zag from mode
 # multiple chains from the center
-f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
 for r in 1:r_insp
@@ -710,7 +711,7 @@ savefig(f4, string(SAVEwd, NameEx, "/f4.pdf"))
 
 
 # f5 - density inspection
-zzsk = zz(; NS=100000, x0_0=start, tmax=tmax_tuned)
+zzsk = zz(; NS=100000, x0_0=rand(MvNormal([0,0],Diagonal(ones(Dim)).*0.1+zeros( Dim,Dim))), tmax=tmax_tuned)
 zzsm = zzsample(;N=10000, sk=zzsk)
 f5=plot(zzsm[:, 1], zzsm[:, 2], seriestype=:scatter,
         color=:black, alpha=0.5, markersize=2,
@@ -727,7 +728,7 @@ L_tuned=2
 # multiple chains from the center
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
-f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 for r in 1:r_insp
     start= rand(MvNormal([0,0],Diagonal(ones(Dim)).*0.1+zeros( Dim,Dim)))
     startpoints[r, :] = start
@@ -746,7 +747,7 @@ f7=tailstart_hmc(xrange=[-lim, lim], yrange=[-lim, lim], nside=10)
 savefig(f7, string(SAVEwd, NameEx, "/f7.pdf"))
 
 # f8 - density hmc
-hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=start)
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=rand(MvNormal([0,0],Diagonal(ones(Dim)).*0.1+zeros( Dim,Dim))))
 f8=plot(hmc["SampleQ"][1:10:100000, 1], hmc["SampleQ"][1:10:100000, 2], seriestype=:scatter,
         color=:black, alpha=0.5, markersize=2, xlabel="X₁", ylabel="X₂")
 contour!(range(-4, 4, length=100),range(-4,4, length=100),[(gx([x,y])) for y in range(-4, 4, length=100), x in range(-4,4, length=100)], fill=(false,cgrad(:grays,[0,0.1,1.0]))
@@ -767,7 +768,7 @@ end
 # f9 - chose nbatches for zz
 f9= bs_zz(;try_nb=[10, 100, 500, 1000, 2000])
 savefig(f9, string(SAVEwd, NameEx, "/f9.pdf"))
-nbZZ_tuned = 500
+nbZZ_tuned = 1000
 
 # f10 - chose nbatches for hmc
 f10= bs_hmc(;try_nb=[10, 100, 500, 1000, 2000])
@@ -837,7 +838,7 @@ tmax_tuned=5
 
 # f3 - inspection of the zig zag from mode
 # multiple chains from the center
-f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f3=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
 for r in 1:r_insp
@@ -861,7 +862,7 @@ savefig(f4, string(SAVEwd, NameEx, "/f4.pdf"))
 
 
 # f5 - density inspection
-zzsk = zz(; NS=100000, x0_0=start, tmax=tmax_tuned)
+zzsk = zz(; NS=100000, x0_0=rand(MvNormal([0,0],Diagonal(ones(Dim)).*2+zeros( Dim,Dim))), tmax=tmax_tuned)
 zzsm = zzsample(;N=10000, sk=zzsk)
 f5=plot(zzsm[:, 1], zzsm[:, 2], seriestype=:scatter,
         color=:black, alpha=0.5, markersize=2,
@@ -878,7 +879,7 @@ L_tuned=10
 # multiple chains from the center
 startpoints = Array{Float64, 2}(undef, r_insp, 2)
 endpoints = Array{Float64, 2}(undef, r_insp, 2)
-f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+f6=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
 for r in 1:r_insp
     start= rand(MvNormal([0,0],Diagonal(ones(Dim)).*2+zeros( Dim,Dim)))
     startpoints[r, :] = start
@@ -897,7 +898,7 @@ f7=tailstart_hmc(xrange=[-lim, lim], yrange=[-lim, lim], nside=10)
 savefig(f7, string(SAVEwd, NameEx, "/f7.pdf"))
 
 # f8 - density hmc
-hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=start)
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=rand(MvNormal([0,0],Diagonal(ones(Dim)).*2+zeros( Dim,Dim))))
 f8=plot(hmc["SampleQ"][1:10:100000, 1], hmc["SampleQ"][1:10:100000, 2], seriestype=:scatter,
         color=:black, alpha=0.5, markersize=2, xlabel="X₁", ylabel="X₂")
 contour!(range(-4, 4, length=100),range(-4,4, length=100),[(gx([x,y])) for y in range(-4, 4, length=100), x in range(-4,4, length=100)], fill=(false,cgrad(:grays,[0,0.1,1.0]))

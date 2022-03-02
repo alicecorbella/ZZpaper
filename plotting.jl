@@ -50,7 +50,7 @@ function tailstart(; xrange, yrange, nside)
     starty=vcat(ones(nside)*yrange[1], range(yrange[1], yrange[2], length=nside),
         ones(nside)*yrange[2], reverse(range(yrange[1], yrange[2], length=nside)))
     endxy =  Array{Float64, 2}(undef, length(starty),2)
-    outplot=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+    outplot=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
     for r in 1:length(startx)
         zzsk =  zz(; NS=1000, x0_0=[startx[r], starty[r]], tmax=tmax_tuned)
         plot!(zzsk["SK"][:, 2], zzsk["SK"][:, 3], color=:gray, linewidth=0.3)
@@ -69,7 +69,7 @@ function tailstart_hmc(; xrange, yrange, nside)
     starty=vcat(ones(nside)*yrange[1], range(yrange[1], yrange[2], length=nside),
         ones(nside)*yrange[2], reverse(range(yrange[1], yrange[2], length=nside)))
     endxy =  Array{Float64, 2}(undef, length(starty),2)
-    outplot=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂")
+    outplot=plot(0,0, alpha=0, xlabel="X₁", ylabel="X₂", size = (pt(84), pt(60)))
     for r in 1:length(startx)
         hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=[startx[r], starty[r]])
         plot!(hmc["SampleQ"][:, 1], hmc["SampleQ"][:, 2], color=:gray, linewidth=0.3)
@@ -195,8 +195,8 @@ function bs_tp_zz(;try_nb, ZZs = zzs, D=Dim)
         end
     end
     zzmeanESS_nb =  mapslices(mean, zzESS_nb, dims = [1])
-    outplot=plot(string.((try_nb)), zzmeanESS_nb[1,:,:], title="ZZ - Average ESS per dimensions",
-        xlabel="Number of batches", ylabel="Mean ESS", legend=true,
+    outplot=plot(string.((try_nb)), zzmeanESS_nb[1,:,:],
+        xlabel="Number of batches", ylabel="Mean ESS - ZZ", legend=true,
         labels=string.("dim", transpose(1:Dim)))
     return outplot
 end
