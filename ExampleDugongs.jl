@@ -1,13 +1,16 @@
 # Direcotries
 CODEwd = "/Users/alice/projects/ZZpaper/"
 SAVEwd = "/Users/alice/OneDrive - University of Warwick/Manuscripts/04ADZZ/figures/Sec5.1/"
-
+NameEx = ""
 # Loading the packages
 include(string(CODEwd, "env.jl"))
 
 # Loading the functions
 include(string(CODEwd, "functions.jl"))
 include(string(CODEwd, "plotting.jl"))
+
+pt(78)
+gr(size = (pt(84), pt(84)), labelfontsize=8, legend = false)
 
 r_insp=10
 r_ess=100
@@ -47,42 +50,55 @@ end
 
 # f2 - data
 f1=plot(data_x, data_y, seriestype=:scatter, legend=false, color=:black,
-    alpha=0.5, xlabel="Xⱼ", ylabel="Yⱼ", size = (300, 240))
+    alpha=0.5, xlabel="Zⱼ", ylabel="Yⱼ")
 savefig(f1, string(SAVEwd, "f1.pdf"))
 
 # f2 - tune of t_max
 f2=tmplot(R=100, try_tmax=[0.01, 0.02, 0.03,0.04, 0.05, 0.06])
-savefig(f2, string(SAVEwd,"f2.pdf"))
+savefig(f2["NHPP"], string(SAVEwd, NameEx, "/f2a.pdf"))
+savefig(f2["opt"], string(SAVEwd, NameEx, "/f2b.pdf"))
+savefig(f2["tot"], string(SAVEwd, NameEx, "/f2c.pdf"))
+f2tot= plot(f2["NHPP"],f2["opt"],f2["tot"], layout=(1,3),
+    size=(pt(252), pt(60)))
+savefig(f2tot, string(SAVEwd, NameEx, "/f2.pdf"))
 tmax_tuned=0.02
 
 # f3 - inspection of the zig zag from mode
-start=[0,0,0,0]
+
 # multiple chains from the center
 SKinsp= Array{Float64, 3}(undef, 1000, Dim, r_insp)
 TMinsp= Array{Float64, 3}(undef, 1000, 1, r_insp)
 for r in 1:r_insp
+    start= rand(MvNormal([1,0,2,-2],Diagonal(ones(Dim)).*0.01+zeros( Dim,Dim)))
     zzsk =  zz(; NS=1000, x0_0=start, tmax=tmax_tuned)
     SKinsp[:,:,r] = zzsk["SK"][:, 2:(Dim+1)]
     TMinsp[:,:,r] = zzsk["SK"][:, 1]
 end
 
-f3a=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₁")
+f3a=plot(0,0, alpha=0, xlabel="Time", ylabel="X₁")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,1,r])
+    plot!(TMinsp[:, 1, r], SKinsp[:,1,r], linewidth=0.5, color=:gray)
 end
-f3b=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₂")
+f3b=plot(0,0, alpha=0, xlabel="Time", ylabel="X₂")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,2,r])
+    plot!(TMinsp[:, 1, r], SKinsp[:,2,r], linewidth=0.5, color=:gray)
 end
-f3c=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₃")
+f3c=plot(0,0, alpha=0, xlabel="Time", ylabel="X₃")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,3,r])
+    plot!(TMinsp[:, 1, r], SKinsp[:,3,r], linewidth=0.5, color=:gray)
 end
-f3d=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₄")
+f3d=plot(0,0, alpha=0, xlabel="Time", ylabel="X₄")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,4,r])
+    plot!(TMinsp[:, 1, r], SKinsp[:,4,r], linewidth=0.5, color=:gray)
 end
-f3 = plot(f3a, f3b, f3c, f3d, layout=(2, 2), size=(1000, 800))
+savefig(f3a, string(SAVEwd, "/f3a.pdf"))
+savefig(f3b, string(SAVEwd, "/f3b.pdf"))
+savefig(f3c, string(SAVEwd, "/f3c.pdf"))
+savefig(f3d, string(SAVEwd, "/f3d.pdf"))
+
+
+
+f3 = plot(f3a, f3b, f3c, f3d, layout=(2, 2), size=(pt(84*2), pt(84*2)))
 savefig(f3, string(SAVEwd, "/f3.pdf"))
 
 # f4 - inspection of the zig zag from tail
@@ -95,41 +111,48 @@ startvalues=hcat([5, 5, 5, 5],
 SKinsp= Array{Float64, 3}(undef, 1000, Dim, size(startvalues)[2])
 TMinsp= Array{Float64, 3}(undef, 1000, 1, size(startvalues)[2])
 for r in 1:size(startvalues)[2]
-    print(U(startvalues[:, r]))
-    zzsk =  zz(; NS=1000, x0_0=startvalues[:, r], tmax=tmax_tuned)
+    start = rand([-4,4], 4)
+    print(U(start))
+    # print(U(startvalues[:, r]))
+    zzsk =  zz(; NS=1000, x0_0=start, tmax=tmax_tuned)
     SKinsp[:,:,r] = zzsk["SK"][:, 2:(Dim+1)]
     TMinsp[:,:,r] = zzsk["SK"][:, 1]
     print(r)
 end
 
-f4a=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₁")
+f4a=plot(0,0, alpha=0, xlabel="Time", ylabel="X₁")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,1,r])
+    plot!(TMinsp[:, 1, r], SKinsp[:,1,r], linewidth=0.5, color=:gray)
 end
-f4b=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₂")
+f4b=plot(0,0, alpha=0, xlabel="Time", ylabel="X₂")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,2,r])
+    plot!(TMinsp[:, 1, r], SKinsp[:,2,r], linewidth=0.5, color=:gray)
 end
-f4c=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₃")
+f4c=plot(0,0, alpha=0, xlabel="Time", ylabel="X₃")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,3,r])
+    plot!(TMinsp[:, 1, r], SKinsp[:,3,r], linewidth=0.5, color=:gray)
 end
-f4d=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₄")
+f4d=plot(0,0, alpha=0, xlabel="Time", ylabel="X₄")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,4,r])
+    plot!(TMinsp[:, 1, r], SKinsp[:,4,r], linewidth=0.5, color=:gray)
 end
-f4 = plot(f4a, f4b, f4c, f4d, layout=(2, 2), size=(1000, 800))
+savefig(f4a, string(SAVEwd, "/f4a.pdf"))
+savefig(f4b, string(SAVEwd, "/f4b.pdf"))
+savefig(f4c, string(SAVEwd, "/f4c.pdf"))
+savefig(f4d, string(SAVEwd, "/f4d.pdf"))
+f4 = plot(f4a, f4b, f4c, f4d, layout=(2, 2), size=(pt(84*2), pt(84*2)))
 savefig(f4, string(SAVEwd, "/f4.pdf"))
 
 
 # f5 - density inspection
-zzsk = zz(; NS=100000, x0_0=start, tmax=tmax_tuned)
+zzsk = zz(; NS=100000, x0_0=rand(MvNormal([1,0,2,-2],Diagonal(ones(Dim)).*0.01+zeros( Dim,Dim))),
+    tmax=tmax_tuned)
 zzsm = zzsample(;N=10000, sk=zzsk)
-f5a=density(zzsm[1000:10000, 1], xlabel="θ₁", color=:black, linewidth=3, alpha=0.7)
-f5b=density(zzsm[1000:10000, 2], xlabel="θ₂", color=:black, linewidth=3, alpha=0.7)
-f5c=density(zzsm[1000:10000, 3], xlabel="θ₃", color=:black, linewidth=3, alpha=0.7)
-f5d=density(zzsm[1000:10000, 4], xlabel="θ₄", color=:black, linewidth=3, alpha=0.7)
-f5 = plot(f5a, f5b, f5c, f5d, layout=(2, 2), size=(1000, 800))
+f5a=density(zzsm[1000:10000, 1], xlabel="X₁", color=:black, linewidth=3, alpha=0.7)
+f5b=density(zzsm[1000:10000, 2], xlabel="X₂", color=:black, linewidth=3, alpha=0.7)
+f5c=density(zzsm[1000:10000, 3], xlabel="X₃", color=:black, linewidth=3, alpha=0.7)
+f5d=density(zzsm[1000:10000, 4], xlabel="X₄", color=:black, linewidth=3, alpha=0.7)
+f5 = plot(f5a, f5b, f5c, f5d, layout=(2, 2), size=(pt(84*2), pt(84*2)))
 savefig(f5, string(SAVEwd, "/f5.pdf"))
 
 
@@ -137,34 +160,44 @@ savefig(f5, string(SAVEwd, "/f5.pdf"))
 Lε_tuned=0.1
 L_tuned=10
 
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=[1,0,2,-2])
+plot(plot(hmc["SampleQ"][:, 1]), plot(hmc["SampleQ"][:, 2]),
+     plot(hmc["SampleQ"][:, 3]), plot(hmc["SampleQ"][:, 4]),
+        layout=(4,1), size=(1000,1500))
+ac=plot(autocor(hmc["SampleQ"][:, 1]))
+plot!(autocor(hmc["SampleQ"][:, 2]))
+plot!(autocor(hmc["SampleQ"][:, 3]))
+plot!(autocor(hmc["SampleQ"][:, 4]))
+sum(hmc["accept"])/1000
+
 
 
 # f6 - inspection of the HMC from mode
-start=[0,0,0,0]
 # multiple chains from the center
 HMCinsp= Array{Float64, 3}(undef, 1000, Dim, r_insp)
 for r in 1:r_insp
+    start= rand(MvNormal([1,0,2,-2],Diagonal(ones(Dim)).*0.01+zeros( Dim,Dim)))
     hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=start)
     HMCinsp[:,:,r] = hmc["SampleQ"][1:1000, 1:(Dim)]
 end
 
-f6a=plot(0,0, alpha=0, xlabel="Iterations", ylabel="θ₁")
+f6a=plot(0,0, alpha=0, xlabel="Iterations", ylabel="X₁")
 for r in 1:r_insp
-    plot!(HMCinsp[:,1,r])
+    plot!(HMCinsp[:,1,r], linewidth=0.5, color=:gray)
 end
-f6b=plot(0,0, alpha=0, xlabel="Iterations", ylabel="θ₂")
+f6b=plot(0,0, alpha=0, xlabel="Iterations", ylabel="X₂")
 for r in 1:r_insp
-    plot!(HMCinsp[:,2,r])
+    plot!(HMCinsp[:,2,r], linewidth=0.5, color=:gray)
 end
-f6c=plot(0,0, alpha=0, xlabel="Iterations", ylabel="θ₃")
+f6c=plot(0,0, alpha=0, xlabel="Iterations", ylabel="X₃")
 for r in 1:r_insp
-    plot!(HMCinsp[:,3,r])
+    plot!(HMCinsp[:,3,r], linewidth=0.5, color=:gray)
 end
-f6d=plot(0,0, alpha=0, xlabel="Iterations", ylabel="θ₄")
+f6d=plot(0,0, alpha=0, xlabel="Iterations", ylabel="X₄")
 for r in 1:r_insp
-    plot!(HMCinsp[:,4,r])
+    plot!(HMCinsp[:,4,r], linewidth=0.5, color=:gray)
 end
-f6 = plot(f6a, f6b, f6c, f6d, layout=(2, 2), size=(1000, 800))
+f6 = plot(f6a, f6b, f6c, f6d, layout=(2, 2), size=(pt(84*2), pt(84*2)))
 savefig(f6, string(SAVEwd, "/f6.pdf"))
 
 
@@ -179,60 +212,69 @@ startvalues=hcat([5, 5, 5, 5],
 
 HMCinsp= Array{Float64, 3}(undef, 1000, Dim, size(startvalues)[2])
 for r in 1: size(startvalues)[2]
-    hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=startvalues[:,r])
+    start = rand([-4,4], 4)
+    print(U(start))
+    hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=start)
     HMCinsp[:,:,r] = hmc["SampleQ"][1:1000, 1:(Dim)]
 end
 
 HMCinsp
 
-f7a=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₁")
+f7a=plot(0,0, alpha=0, xlabel="Time", ylabel="X₁")
 for r in 1:r_insp
-    plot!(HMCinsp[:,1,r])
+    plot!(HMCinsp[:,1,r], linewidth=0.5, color=:gray)
 end
-f7b=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₂")
+f7b=plot(0,0, alpha=0, xlabel="Time", ylabel="X₂")
 for r in 1:r_insp
-    plot!(HMCinsp[:,2,r])
+    plot!(HMCinsp[:,2,r], linewidth=0.5, color=:gray)
 end
-f7c=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₃")
+f7c=plot(0,0, alpha=0, xlabel="Time", ylabel="X₃")
 for r in 1:r_insp
-    plot!(HMCinsp[:,3,r])
+    plot!(HMCinsp[:,3,r], linewidth=0.5, color=:gray)
 end
-f7d=plot(0,0, alpha=0, xlabel="Time", ylabel="θ₄")
+f7d=plot(0,0, alpha=0, xlabel="Time", ylabel="X₄")
 for r in 1:r_insp
-    plot!(HMCinsp[:,4,r])
+    plot!(HMCinsp[:,4,r], linewidth=0.5, color=:gray)
 end
-f7 = plot(f7a, f7b, f7c, f7d, layout=(2, 2), size=(1000, 800))
+savefig(f7a, string(SAVEwd, "/f7a.pdf"))
+savefig(f7b, string(SAVEwd, "/f7b.pdf"))
+savefig(f7c, string(SAVEwd, "/f7c.pdf"))
+savefig(f7d, string(SAVEwd, "/f7d.pdf"))
+
+
+
+f7 = plot(f7a, f7b, f7c, f7d, layout=(2, 2), size=(pt(84*2), pt(84*2)))
 savefig(f7, string(SAVEwd, "/f7.pdf"))
 
 # f8 - density hmc
-hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,qs=start)
-f8a=density(hmc["SampleQ"][1000:10:100000, 1], xlabel="θ₁", color=:black, linewidth=3, alpha=0.7)
-f8b=density(hmc["SampleQ"][1000:10:100000, 2], xlabel="θ₂", color=:black, linewidth=3, alpha=0.7)
-f8c=density(hmc["SampleQ"][1000:10:100000, 3], xlabel="θ₃", color=:black, linewidth=3, alpha=0.7)
-f8d=density(hmc["SampleQ"][1000:10:100000, 4], xlabel="θ₄", color=:black, linewidth=3, alpha=0.7)
-f8 = plot(f8a, f8b, f8c, f8d, layout=(2, 2), size=(1000, 800))
-
+hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=100000,
+    qs=rand(MvNormal([1,0,2,-2],Diagonal(ones(Dim)).*0.01+zeros( Dim,Dim))))
+f8a=density(hmc["SampleQ"][1000:10:100000, 1], xlabel="X₁", color=:black, linewidth=3, alpha=0.7)
+f8b=density(hmc["SampleQ"][1000:10:100000, 2], xlabel="X₂", color=:black, linewidth=3, alpha=0.7)
+f8c=density(hmc["SampleQ"][1000:10:100000, 3], xlabel="X₃", color=:black, linewidth=3, alpha=0.7)
+f8d=density(hmc["SampleQ"][1000:10:100000, 4], xlabel="X₄", color=:black, linewidth=3, alpha=0.7)
+f8 = plot(f8a, f8b, f8c, f8d, layout=(2, 2), size=(pt(84*2), pt(84*2)))
 savefig(f8, string(SAVEwd, "/f8.pdf"))
 
 
 
 # f8 - density hmc
-f58a=density(hmc["SampleQ"][1000:10:100000, 1], xlabel="θ₁", color=:red, linewidth=3, alpha=0.7)
+f58a=density(hmc["SampleQ"][1000:10:100000, 1], xlabel="X₁", color=:red, linewidth=3, alpha=0.7)
 density!(zzsm[1000:10000, 1], xlabel="θ₁", color=:blue, linewidth=3, alpha=0.7)
-f58b=density(hmc["SampleQ"][1000:10:100000, 2], xlabel="θ₂", color=:red, linewidth=3, alpha=0.7)
+f58b=density(hmc["SampleQ"][1000:10:100000, 2], xlabel="X₂", color=:red, linewidth=3, alpha=0.7)
 density!(zzsm[1000:10000, 2], xlabel="θ₂", color=:blue, linewidth=3, alpha=0.7)
-f58c=density(hmc["SampleQ"][1000:10:100000, 3], xlabel="θ₃", color=:red, linewidth=3, alpha=0.7)
+f58c=density(hmc["SampleQ"][1000:10:100000, 3], xlabel="X₃", color=:red, linewidth=3, alpha=0.7)
 density!(zzsm[1000:10000, 3], xlabel="θ₃", color=:blue, linewidth=3, alpha=0.7)
-f58d=density(hmc["SampleQ"][1000:10:100000, 4], xlabel="θ₄", color=:red, linewidth=3, alpha=0.7)
+f58d=density(hmc["SampleQ"][1000:10:100000, 4], xlabel="X₄", color=:red, linewidth=3, alpha=0.7)
 density!(zzsm[1000:10000, 4], xlabel="θ₄", color=:blue, linewidth=3, alpha=0.7)
-f58 = plot(f58a, f58b, f58c, f58d, layout=(2, 2), size=(1000, 800))
+f58 = plot(f58a, f58b, f58c, f58d, layout=(2, 2), size=(pt(84*2), pt(84*2)))
 savefig(f58, string(SAVEwd, "/f58.pdf"))
 
 
 zzs = Dict()
 hmcs= Dict()
 for r in 1:r_ess
-    start=rand(Dim)
+    start=rand(MvNormal([1,0,2,-2],Diagonal(ones(Dim)).*0.01+zeros( Dim,Dim)))
     zzs[[r]]=zz(NS=false, B=budget, x0_0=start, tmax=tmax_tuned)
     hmcs[[r]]=runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=Int(round(budget/(L_tuned+1))),qs=start)
     print(r)
@@ -241,7 +283,7 @@ end
 # f9 - chose nbatches for zz
 f9= bs_zz(;try_nb=[5, 10,25, 50, 100, 500])
 savefig(f9, string(SAVEwd, "/f9.pdf"))
-nbZZ_tuned = 25
+nbZZ_tuned = 50
 
 # f10 - chose nbatches for hmc
 f10= bs_hmc(;try_nb=[5, 10,25, 50, 100, 500])
@@ -258,12 +300,12 @@ io = open(string(SAVEwd, "/summaries.txt"), "w")
 write(io, outESS["string"])
 close(io)
 f11=violin(string.(transpose(1:Dim)), (outESS["essZZ"]), side=:right, linewidth=0,
-    label="ZZ", color=:blue, alpha=0.7, xlabel="Dim", ylabel="ESS", legend=false,
+    label="ZZ", color=:black, xlabel="Dim", ylabel="ESS", legend=false,
     ylims=(0, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*1.1))
 violin!(string.(transpose(1:Dim)), (outESS["essHMC"]), side=:left, linewidth=0,
-    label="HMC", color=:red)
-annotate!([(Dim+0.2, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*1.05, ("ZZ", 14, :blue, :center)),
-    (Dim+0.2, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*0.95, ("HMC", 14, :red, :center))])
+    label="HMC", color=:gray)
+annotate!([(Dim+0.2, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*1.05, ("ZZ", 14, :black, :center)),
+    (Dim+0.2, maximum(hcat(outESS["essZZ"], outESS["essHMC"]))*0.95, ("HMC", 14, :gray, :center))])
 savefig(f11, string(SAVEwd, "/f11.pdf"))
 
 # save ESS
