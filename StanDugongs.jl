@@ -48,11 +48,8 @@ StanDugongs= "
     }
     model {
       vector[N] mu;
-      mu = alpha + beta * gamma^(x);
-      alpha ~ uniform(0,100000);
-      beta  ~ uniform(0,100000);
+      mu = alpha - beta * gamma^(x);
       gamma ~ beta(7,7/3);
-      sigma ~ uniform(0,100000);
       y ~ normal(mu, sigma);
     }
 ";
@@ -95,8 +92,12 @@ plot(plot(df6_1s[:,1]), plot(df6_1s[:,2]), plot(df6_1s[:,3]), plot(df6_1s[:,4]),
     layout=(2,2))
 
 
+plot(density(df6_1s[100:1000,1]), density(df6_1s[100:1000,2]),
+    density(df6_1s[100:1000,3]), density(df6_1s[100:1000,4]),
+    layout=(2,2), size=(600,600))
 
-init = (alpha = exp(12), beta = exp(12), gamma= exp(12)/(1+exp(12)), sigma = exp(12))
+c=8
+init = (alpha = exp(c), beta = exp(c), gamma= exp(c)/(1+exp(c)), sigma = exp(c))
 
 
 rc6_1s = stan_sample(m6_1s; data, init);
@@ -124,7 +125,5 @@ end
 
 df6_1s = DataFrame(st6_1s)
 
-plot(df6_1s[:,1])
-plot(df6_1s[:,2])
-plot(df6_1s[:,3])
-plot(df6_1s[:,4])
+plot(plot(df6_1s[:,1]),plot(df6_1s[:,2]),
+    plot(df6_1s[:,3]),plot(df6_1s[:,4]), layout=(2,2),size=(600,600))

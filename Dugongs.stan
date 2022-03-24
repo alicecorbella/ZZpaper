@@ -12,11 +12,11 @@
     }
     model {
       vector[N] mu;
-      mu = alpha + beta * pow(gamma,(x));
-      alpha ~ uniform(0,100000);
-      beta  ~ uniform(0,100000);
-      gamma ~ beta(7,7/3);
-      sigma ~ uniform(0,100000);
-      y ~ normal(mu, sigma);
+      gamma ~ beta(7,7.0/3.0);
+      for (i in 1:N){
+         mu[i] = alpha - beta * pow(gamma,(x[i]));
+         y[i] ~ normal(mu[i], sigma);
+      }
+      
     }
 

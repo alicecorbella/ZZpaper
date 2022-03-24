@@ -68,6 +68,14 @@ f2tot= plot(f2["NHPP"],f2["opt"],f2["tot"], layout=(1,3),
 savefig(f2tot, string(SAVEwd, NameEx, "/f2.pdf"))
 tmax_tuned=0.02
 
+zzsk =  zz(; NS=10000, x0_0=[0,0,0,0], tmax=tmax_tuned)
+
+zzsm = zzsample(;N=1000, sk=zzsk)
+plot(density(exp.(zzsm[100:1000,1])),density(exp.(zzsm[100:1000,2])),
+    density(exp.(zzsm[100:1000,3])./(1 .+exp.(zzsm[100:1000,3]))),density(exp.(zzsm[100:1000,4])),
+    layout=(2,2), size=(600,600))
+
+
 # f3 - inspection of the zig zag from mode
 
 # multiple chains from the center
@@ -325,14 +333,14 @@ end
 
 # f4 - inspection of the zig zag from tail
 Random.seed!(1234)
-SKinsp= Array{Float64, 3}(undef, 1000, Dim, 10)
-TMinsp= Array{Float64, 3}(undef, 1000, 1, 10)
+SKinsp= Array{Float64, 3}(undef, 10000, Dim, 10)
+TMinsp= Array{Float64, 3}(undef, 10000, 1, 10)
 for r in 1:10
-    start = rand([-12,12], 4)
+    start = rand([-20,20], 4)
     print(start)
     print(U(start))
     # print(U(startvalues[:, r]))
-    zzsk =  zz(; NS=1000,x0_0=start, v0_0=[-1,-1,-1,-1],tmax=tmax_tuned)
+    zzsk =  zz(; NS=10000,x0_0=start, v0_0=[-1,-1,-1,-1],tmax=tmax_tuned)
     SKinsp[:,:,r] = zzsk["SK"][:, 2:(Dim+1)]
     TMinsp[:,:,r] = zzsk["SK"][:, 1]
     print(r)
