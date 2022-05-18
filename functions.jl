@@ -166,6 +166,23 @@ function zz(;
                 if tp >= horizon    # move deterministically if reached the horizon
                     ts = ts+horizon
                     x0i= x0i+horizon*v0i
+                elseif Λ̄>=(10.0^10)
+                    # chose dimension to switch
+                    m  = argmax(rateswitch(0; x0=x0i, v0=v0i))
+                    # update location and switch velocity
+                    x0i    = x0i + tp * v0i
+                    v0i[m] = -v0i[m]
+                    # save the skeleton point
+                    v0set[:, k] = v0i
+                    x0set[:, k] = x0i
+                    t0set[1, k] = t0set[1, (k-1)]+ts+tp
+                    # reset time from skeleton point, horizon,
+                    # flag acceptance and increase counter
+                    ts = 0.0
+                    tp = 0.0
+                    horizon = tmax
+                    k = k+1
+                    accept = true
                 else                # evaluate proposal
                     accept = false  # start evaluations
                     while (tp < horizon) && (accept == false)
