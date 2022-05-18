@@ -24,7 +24,8 @@ budget=20000
 pt(78)
 
 
-gr(size = (pt(84), pt(84)), labelfontsize=8, legend = false)
+gr(size = (pt(84), pt(84)), labelfontsize=8, legend = false,
+    xtickfontsize=8,ytickfontsize=8)
 
 # -----------------------------------------
 # Example on Bivariate Isotropic normal
@@ -81,6 +82,7 @@ savefig(f4, string(SAVEwd, NameEx, "/f4.pdf"))
 
 
 # f5 - density inspection
+start= rand(MvNormal(μ,Σ))
 zzsk = zz(; NS=100000, x0_0=start, tmax=tmax_tuned)
 zzsm = zzsample(;N=10000, sk=zzsk)
 f5=plot(zzsm[:, 1], zzsm[:, 2], seriestype=:scatter,
@@ -807,7 +809,7 @@ zzs=zzsk=zzsm=hmc=hmcs=nothing
 # Example on Heavy Tailed normal
 # -----------------------------------------
 NameEx = "HeavyTail2d"
-# mkdir(string(SAVEwd, NameEx))
+mkdir(string(SAVEwd, NameEx))
 Dim=2
 μ = zeros(Dim)
 Σ = Diagonal(ones(Dim))+zeros( Dim,Dim)
