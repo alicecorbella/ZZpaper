@@ -393,26 +393,26 @@ end
 
 f4a=plot(0,0, alpha=0, xlabel="Time", ylabel="X₁")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,1,r], linewidth=0.5)
+    plot!(TMinsp[:, 1, r], SKinsp[:,1,r], linewidth=0.5, color=:gray)
 end
-f4b=plot(0,0, alpha=0, xlabel="Time", ylabel="X₂")
+f4b=plot(0,0, alpha=0, xlabel="Time", ylabel="X₂", color=:gray)
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,2,r], linewidth=0.5)
+    plot!(TMinsp[:, 1, r], SKinsp[:,2,r], linewidth=0.5, color=:gray)
 end
 f4c=plot(0,0, alpha=0, xlabel="Time", ylabel="X₃")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,3,r], linewidth=0.5)
+    plot!(TMinsp[:, 1, r], SKinsp[:,3,r], linewidth=0.5, color=:gray)
 end
 f4d=plot(0,0, alpha=0, xlabel="Time", ylabel="X₄")
 for r in 1:r_insp
-    plot!(TMinsp[:, 1, r], SKinsp[:,4,r], linewidth=0.5)
+    plot!(TMinsp[:, 1, r], SKinsp[:,4,r], linewidth=0.5, color=:gray)
 end
-# savefig(f4a, string(SAVEwd, "/f4aWSC.pdf"))
-# savefig(f4b, string(SAVEwd, "/f4bWSC.pdf"))
-# savefig(f4c, string(SAVEwd, "/f4cWSC.pdf"))
-# savefig(f4d, string(SAVEwd, "/f4dWSC.pdf"))
+savefig(f4a, string(SAVEwd, "/f4a.pdf"))
+savefig(f4b, string(SAVEwd, "/f4b.pdf"))
+savefig(f4c, string(SAVEwd, "/f4c.pdf"))
+savefig(f4d, string(SAVEwd, "/f4d.pdf"))
 f4 = plot(f4a, f4b, f4c, f4d, layout=(2, 2), size=(pt(84*2), pt(84*2)))
-# savefig(f4, string(SAVEwd, "/f4WSC.pdf"))
+savefig(f4, string(SAVEwd, "/f4.pdf"))
 
 
 # f5 - density inspection
@@ -480,13 +480,13 @@ startvalues=hcat([5, 5, 5, 5],
                 [5, -5, -5, 5],[5, -5, 5, -5],[5, 5, -5, -5],
                 [-5, -5, -5, 5],[-5, -5, 5, -5],[-5, 5, -5, -5],[5, -5, -5, -5],
                 [-5, -5, -5, -5])
-
-HMCinsp= Array{Float64, 3}(undef, 1000, Dim, size(startvalues)[2])
+Random.seed!(1234)
+HMCinsp= Array{Float64, 3}(undef, 10000, Dim, size(startvalues)[2])
 for r in 1: size(startvalues)[2]
-    start = rand([-4,4], 4)
+    start = rand([-20,20], 4)
     print(U(start))
-    hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=1000,qs=start)
-    HMCinsp[:,:,r] = hmc["SampleQ"][1:1000, 1:(Dim)]
+    hmc = runHMC(;epsilon=Lε_tuned/L_tuned,L=L_tuned,IT=10000,qs=start)
+    HMCinsp[:,:,r] = hmc["SampleQ"][1:10000, 1:(Dim)]
 end
 
 HMCinsp
@@ -511,8 +511,6 @@ savefig(f7a, string(SAVEwd, "/f7a.pdf"))
 savefig(f7b, string(SAVEwd, "/f7b.pdf"))
 savefig(f7c, string(SAVEwd, "/f7c.pdf"))
 savefig(f7d, string(SAVEwd, "/f7d.pdf"))
-
-
 
 f7 = plot(f7a, f7b, f7c, f7d, layout=(2, 2), size=(pt(84*2), pt(84*2)))
 savefig(f7, string(SAVEwd, "/f7.pdf"))

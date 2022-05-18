@@ -57,8 +57,8 @@ start = [-0.4, +9, -0.4, -0.4]
 start2= [-0.45, 10, -0.5, -3]
 zzsk  =  zz(; NS=5000, x0_0=start, tmax=0.01)
 zzsk2 =  zz(; NS=5000, x0_0=start2, tmax=0.01)
-JLD.save(string(SAVEwd, "/zzALLOBS.jld"),
-    Dict("zz1"=>zzsk, "zz2"=>zzsk2))
+# JLD.save(string(SAVEwd, "/zzALLOBS.jld"),
+#     Dict("zz1"=>zzsk, "zz2"=>zzsk2))
 zzlong=JLD.load(string(SAVEwd, "/zzALLOBS.jld"))
 zzsk=zzlong["zz1"]
 zzsk2=zzlong["zz2"]
@@ -103,6 +103,9 @@ p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
 # savefig(p5, string(SAVEwd, "4parsmp.pdf"))
 
 
+# find the optimal value
+opti = optimize(U, [med1, med2, med3, med4])
+x̃=opti.minimizer
 
 # lets try and find the optimal tmax from the mode
 tmplot(;R = 4, try_tmax=[0.0005, 0.001, 0.002, 0.005],
@@ -135,12 +138,12 @@ function Uj(x::Vector;j::Vector{Int},  t = t_vec, c = c_vec, z1= z1_vec, z2=z2_v
             mll+= ((t[j[s]]/μ_j)^α)
         end
     end
-    return (J/sss)*mll
+    return (J/sss)*mll -x[1]
 end
 
 
 # compute the gradient at "median" for CV
-x̃    = [med1, med2, med3, med4]
+# x̃    = [med1, med2, med3, med4]
 ∇tot = ForwardDiff.gradient(U, x̃)
 ∇j   = Array{Float64, 2}(undef, length(t_vec), Dim)
 for jth in 1:length(t_vec)
@@ -224,8 +227,8 @@ savefig(p4, string(SAVEwd, "SS4.pdf"))
 
 
 
-zzskss_frommode_20=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.002,ssM =1000,
-        NOBS=length(t_vec), ssS=20)
+zzskss_frommode_20=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.001,ssM =1000,
+        NOBS=length(t_vec), ssS=50)
 zzskss_frommode_20_bis=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.001,ssM =1000,
         NOBS=length(t_vec), ssS=20)
 zzskss_frommode_20_tris=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.001,ssM =1000,
@@ -238,27 +241,27 @@ zzskss_frommode_50_bis=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.001,ssM =1000,
 zzskss_frommode_50_tris=zz_w_ss(; NS=5000, x0_0=x̃, tmax=0.001,ssM =1000,
         NOBS=length(t_vec), ssS=50)
 
-x_dict=Dict()
+px_dict=Dict()
 for d in 1:Dim
-    px=plot(zzsk["SK"][:, 1], zzsk["SK"][:, d+1], label="All obs",
-        title=dimnames[d],legend=true,linewidth=0.5, color=:black)
-    plot!(zzskss_frommode_20["SK"][:, 1], zzskss_frommode_20["SK"][:, d+1],
-        label="20 ss", linewidth=0.5, color=:blue)
-    plot!(zzskss_frommode_20_bis["SK"][:, 1], zzskss_frommode_20_bis["SK"][:, d+1],
-            label="20 ss (II)", linewidth=0.5, color=:lightblue)
-    plot!(zzskss_frommode_20_tris["SK"][:, 1], zzskss_frommode_20_tris["SK"][:, d+1],
-            label="20 ss (III)", linewidth=0.5, color=:darkblue)
-    plot!(zzskss_frommode_50["SK"][:, 1], zzskss_frommode_50["SK"][:, d+1],
-        label="50 ss", linewidth=0.5, color=:green)
-    plot!(zzskss_frommode_50_bis["SK"][:, 1], zzskss_frommode_50_bis["SK"][:, d+1],
-            label="50 ss (II)", linewidth=0.5, color=:lightgreen)
-    plot!(zzskss_frommode_50_tris["SK"][:, 1], zzskss_frommode_50_tris["SK"][:, d+1],
-            label="50 ss (III)", linewidth=0.5, color=:darkgreen)
+    px=plot(zzsk["SK"][1600:4600, 1], zzsk["SK"][1600:4600, d+1], label="All obs",
+        title=dimnames[d],legend=true,linewidth=0.9)
+    plot!(zzskss_frommode_20["SK"][2000:5000, 1], zzskss_frommode_20["SK"][2000:5000, d+1],
+        label="50 ss", linewidth=0.9)
+    # plot!(zzskss_frommode_20_bis["SK"][:, 1], zzskss_frommode_20_bis["SK"][:, d+1],
+    #         label="20 ss (II)", linewidth=0.5, color=:lightblue)
+    # plot!(zzskss_frommode_20_tris["SK"][:, 1], zzskss_frommode_20_tris["SK"][:, d+1],
+    #         label="20 ss (III)", linewidth=0.5, color=:darkblue)
+    # plot!(zzskss_frommode_50["SK"][:, 1], zzskss_frommode_50["SK"][:, d+1],
+    #     label="50 ss", linewidth=0.5, color=:green)
+    # plot!(zzskss_frommode_50_bis["SK"][:, 1], zzskss_frommode_50_bis["SK"][:, d+1],
+    #         label="50 ss (II)", linewidth=0.5, color=:lightgreen)
+    # plot!(zzskss_frommode_50_tris["SK"][:, 1], zzskss_frommode_50_tris["SK"][:, d+1],
+    #         label="50 ss (III)", linewidth=0.5, color=:darkgreen)
     px_dict[d]=px
 end
 
 pxsk=plot(px_dict[1], px_dict[2], px_dict[3], px_dict[4], layout=(2,2), size=(1000,800))
-savefig(pxsk, string(SAVEwd, "pxsk.pdf"))
+savefig(pxsk, string(SAVEwd, "skss50fm.pdf"))
 
 smpALLI  = zzsample(N=2000, sk=zzsk)
 smpALLII = zzsample(N=2000, sk=zzsk2)
