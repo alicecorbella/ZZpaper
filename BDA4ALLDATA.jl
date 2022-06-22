@@ -62,13 +62,13 @@ start=x̃
 # run function for 5 iters just for first compilation
 zz(; NS=5, x0_0=start, tmax=0.01)
 
-now() #2022-05-31T14:52:43.592
+now()
 zzsk_smalltm=zz(; NS=5000, x0_0=start, tmax=0.005)
-now()#2022-05-31T18:07:24.781
+now()
 
-now() #2022-05-31T18:07:25.027 previously #22:56
+now()
 zzsk=zz(; NS=5000, x0_0=start, tmax=0.01)
-now() #2022-05-31T23:53:44.796 previously #22:10
+now()
 zzsk
 JLD.save(string(SAVEwd, "/zzALLOBS.jld"),Dict("zz1"=>zzsk))
 
@@ -88,19 +88,6 @@ p5 = plot(p1,p2,p3,p4, layout=(2,2), size=(600,600))
 # obtain an estimate of the mode to
 smp = zzsample(N=5000, sk=zzsk)
 
-
-# # lets try and find the optimal tmax from the mode
-# tmplot(;R = 4, try_tmax=[0.0005, 0.001, 0.002, 0.005],
-#     ns=500, start=[med1, med2, med3, med4])
-# # savefig(string(SAVEwd, "4partmt.pdf"))
-#
-# zzsk_short  =  zz(; NS=50, x0_0=[med1, med2, med3, med4], tmax=0.001)
-#
-# for d in 1:4
-#     dplot[d] = plot(zzsk_short["SK"][:, 1], zzsk_short["SK"][:, d+1], title=dimnames[d])
-# end
-#
-# plot(dplot[1],dplot[2],dplot[3],dplot[4], layout=(2,2), size=(600,600))
 
 # SUBSAMPLING
 
@@ -124,8 +111,7 @@ function Uj(x::Vector;j::Vector{Int},  t = t_vec, c = c_vec, z1= z1_vec, z2=z2_v
 end
 
 
-# compute the gradient at "median" for CV
-# x̃    = [med1, med2, med3, med4]
+# compute the gradient at  x̃  for CV
 ∇tot = ForwardDiff.gradient(U, x̃)
 ∇j   = Array{Float64, 2}(undef, length(t_vec), Dim)
 for jth in 1:length(t_vec)
@@ -137,19 +123,19 @@ end
 zz_w_ss(; NS=5, x0_0=start, tmax=0.005,ssM =1000,
         NOBS=length(t_vec), ssS=50)
 
-now()#2022-05-31T23:54:55.396
+now()
 print(now())
 zzskss_50=zz_w_ss(; NS=5000, x0_0=start, tmax=0.005,ssM =1000,
         NOBS=length(t_vec), ssS=50)
-now()#2022-06-01T01:11:55.156
+now()
 print(now())
 
 
-now()#2022-06-01T01:11:55.657
+now()
 print(now())
 zzskss_20=zz_w_ss(; NS=5000, x0_0=start, tmax=0.005,ssM =1000,
         NOBS=length(t_vec), ssS=20)
-now()#2022-06-01T02:21:08.708
+now()
 print(now())
 
 
