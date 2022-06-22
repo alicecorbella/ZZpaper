@@ -59,6 +59,8 @@ f1=plot(data_x, data_y, seriestype=:scatter, legend=false, color=:black,
 savefig(f1, string(SAVEwd, "f1.pdf"))
 
 # f2 - tune of t_max
+gr(labelfontsize=6,xtickfontsize=6,ytickfontsize=6)
+
 f2=tmplot(R=100, try_tmax=[0.01, 0.02, 0.03,0.04, 0.05, 0.06])
 savefig(f2["NHPP"], string(SAVEwd, NameEx, "/f2a.pdf"))
 savefig(f2["opt"], string(SAVEwd, NameEx, "/f2b.pdf"))
@@ -69,6 +71,9 @@ savefig(f2tot, string(SAVEwd, NameEx, "/f2.pdf"))
 tmax_tuned=0.02
 
 zzsk =  zz(; NS=10000, x0_0=[0,0,0,0], tmax=tmax_tuned)
+
+
+gr(labelfontsize=8,xtickfontsize=8,ytickfontsize=8)
 
 zzsm = zzsample(;N=1000, sk=zzsk)
 plot(density(exp.(zzsm[100:1000,1])),density(exp.(zzsm[100:1000,2])),

@@ -519,8 +519,10 @@ function getMestPOT(;ss, x, v, tmax, J=length(t_vec), D=Dim, SS_s #sub sample si
     λ̄uncl     = zeros(ss, D)
     for s in 1:ss
         for d in 1:D
-            Optd_s= optimize(t -> -rateswitchj(t; j=idsamp[s,:], x0=x, v0=v)[d], 0, tmax, iterations=5)
-            λ̄uncl[s, d]= -Optim.minimum(Optd_s)
+            Optd_s= optimize(t -> -rateswitchj(t; j=idsamp[s,:], x0=x, v0=v)[d], 0, tmax, iterations=1)
+            λ̄uncl[s, d]= maximum([-Optim.minimum(Optd_s),
+                    rateswitchj(0; j=idsamp[s,:], x0=x, v0=v)[d],
+                    rateswitchj(tmax; j=idsamp[s,:], x0=x, v0=v)[d]])
         end
     end
     λ̄ = λ̄uncl[.!isnan.(vec(mapslices(sum, λ̄uncl, dims=2))),:]
@@ -559,8 +561,10 @@ function getMestPOT(;ss, x, v, tmax, J=length(t_vec), D=Dim, SS_s #sub sample si
         λ̄uncl     = zeros(ss, D)
         for s in 1:ss
             for d in 1:D
-                Optd_s= optimize(t -> -rateswitchj(t; j=idsamp[s,:], x0=x, v0=v)[d], 0, tmax, iterations=5)
-                λ̄uncl[s, d]= -Optim.minimum(Optd_s)
+                Optd_s= optimize(t -> -rateswitchj(t; j=idsamp[s,:], x0=x, v0=v)[d], 0, tmax, iterations=1)
+                λ̄uncl[s, d]= maximum([-Optim.minimum(Optd_s),
+                        rateswitchj(0; j=idsamp[s,:], x0=x, v0=v)[d],
+                        rateswitchj(tmax; j=idsamp[s,:], x0=x, v0=v)[d]])
             end
         end
         λ̄ = λ̄uncl[.!isnan.(vec(mapslices(sum, λ̄uncl, dims=2))),:]

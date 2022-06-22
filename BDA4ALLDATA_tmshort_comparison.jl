@@ -1,6 +1,6 @@
 # Direcotries
 CODEwd = "/Users/alice/projects/ZZpaper/"
-SAVEwd = "/Users/alice/OneDrive - University of Warwick/Manuscripts/04ADZZ/figures/sec6.2/"
+SAVEwd = "/Users/alice/OneDrive - University of Warwick/Manuscripts/04ADZZ/figures/sec6.2tmshort/"
 
 # Loading the packages
 include(string(CODEwd, "env.jl"))
@@ -60,15 +60,11 @@ x̃=opti.minimizer
 start=x̃
 
 # run function for 5 iters just for first compilation
-zz(; NS=5, x0_0=start, tmax=0.01)
+zz(; NS=5, x0_0=start, tmax=0.005)
 
-now() #2022-05-31T14:52:43.592
-zzsk_smalltm=zz(; NS=5000, x0_0=start, tmax=0.005)
-now()#2022-05-31T18:07:24.781
-
-now() #2022-05-31T18:07:25.027 previously #22:56
-zzsk=zz(; NS=5000, x0_0=start, tmax=0.01)
-now() #2022-05-31T23:53:44.796 previously #22:10
+now() #2022-05-31T22:30:22.833
+zzsk=zz(; NS=5000, x0_0=start, tmax=0.005)
+now() #2022-06-01T02:01:20.874
 zzsk
 JLD.save(string(SAVEwd, "/zzALLOBS.jld"),Dict("zz1"=>zzsk))
 
@@ -137,21 +133,21 @@ end
 zz_w_ss(; NS=5, x0_0=start, tmax=0.005,ssM =1000,
         NOBS=length(t_vec), ssS=50)
 
-now()#2022-05-31T23:54:55.396
+now()#2022-06-01T02:02:26.268
 print(now())
 zzskss_50=zz_w_ss(; NS=5000, x0_0=start, tmax=0.005,ssM =1000,
         NOBS=length(t_vec), ssS=50)
-now()#2022-06-01T01:11:55.156
+now()#2022-06-01T03:14:11.045
 print(now())
 
-
-now()#2022-06-01T01:11:55.657
-print(now())
+zzskss_20=zz_w_ss(; NS=50, x0_0=start, tmax=0.005,ssM =1000,
+        NOBS=length(t_vec), ssS=20)
+a=now()
 zzskss_20=zz_w_ss(; NS=5000, x0_0=start, tmax=0.005,ssM =1000,
         NOBS=length(t_vec), ssS=20)
-now()#2022-06-01T02:21:08.708
-print(now())
-
+time_ss20=now()-a
+time_ss20
+# 1939765 milliseconds = 30 mins circa
 
 sum(zzskss_50["GradientEvaluations"])
 
@@ -159,9 +155,9 @@ sum(zzskss_50["GradientEvaluations"])
 px_dict=Dict()
 for d in 1:Dim
     px=plot(zzsk["SK"][:, 1], zzsk["SK"][:, d+1], label="All obs",
-        title=dimnames[d],legend=true,linewidth=0.9, color=:blue)
-    plot!(zzskss_50["SK"][:, 1], zzskss_50["SK"][:, d+1],
-        label="50 ss", linewidth=0.9, color=:black)
+        title=dimnames[d],legend=true,linewidth=0.9, color=:gray)
+    plot!(zzskss_20["SK"][:, 1], zzskss_20["SK"][:, d+1],
+        label="20 ss", linewidth=0.9, color=:black)
         px_dict[d]=px
 end
 
